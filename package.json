@@ -1,0 +1,19 @@
+{
+  "name": "robotaxi-explorer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "plotly.js-dist-min": "^3.6.0",
+    "vitest": "^4.1.8"
+  }
+}
