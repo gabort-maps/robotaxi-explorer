@@ -1,0 +1,320 @@
+{
+  "model_version": "0.1.0",
+  "model_name": "Robotaxi Scalability Explorer",
+  "positioning": "Educational scenario model, not a claimed Waymo P&L or investment forecast.",
+  "base_preset_id": "early_growth",
+  "constants": {
+    "annual_total_vehicle_miles_per_vehicle": {
+      "value": 70000,
+      "unit": "total vehicle miles per vehicle-year",
+      "confidence": "medium",
+      "source_ids": [
+        "src_utilisation"
+      ],
+      "methodology_note": "Held constant in v0.1 to keep the public interface focused. It may become an advanced variable later."
+    },
+    "residual_value_rate": {
+      "value": 0.1,
+      "unit": "share of initial vehicle and AV-kit capex",
+      "confidence": "medium-low",
+      "source_ids": [
+        "src_depreciation"
+      ],
+      "methodology_note": "Represents conservative component, battery and recovery value. It does not assume a mature whole-vehicle robotaxi resale market."
+    }
+  },
+  "variables": {
+    "net_revenue_per_paid_mile": {
+      "label": "Net revenue per paid mile",
+      "value": 3.5,
+      "range": {
+        "low": 2.8,
+        "base": 3.5,
+        "high": 4.2
+      },
+      "slider": {
+        "min": 2.0,
+        "max": 5.0,
+        "step": 0.05
+      },
+      "confidence": "low-medium",
+      "range_basis": "Modelled from a gross-fare range and 10% to 20% combined transaction, access, distribution, promotion and service-recovery leakage. Direct Waymo net-revenue disclosure is not available.",
+      "justification": "The tool uses net revenue rather than gross fare so readers can test the economics without separately modelling every tax, partner fee, discount and payment charge.",
+      "source_ids": [
+        "src_model_base_v1"
+      ],
+      "methodology_note": "Revenue retained by the robotaxi operating system after external leakage. It is not EBITDA and excludes no operating costs shown elsewhere.",
+      "unit": "USD per paid mile",
+      "layer": "revenue",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "higher"
+      }
+    },
+    "paid_mile_ratio": {
+      "label": "Paid-mile utilisation",
+      "value": 0.55,
+      "range": {
+        "low": 0.45,
+        "base": 0.55,
+        "high": 0.65
+      },
+      "slider": {
+        "min": 0.4,
+        "max": 0.75,
+        "step": 0.01
+      },
+      "confidence": "medium-high",
+      "range_basis": "The base reflects a Waymo-like observed passenger-onboard share. Low and high cases represent early or fragmented operation versus a dense and well-balanced mature network.",
+      "justification": "Every empty mile still carries depreciation, energy, maintenance, insurance and local operating cost. Utilisation therefore multiplies almost the entire direct cost stack.",
+      "source_ids": [
+        "src_utilisation"
+      ],
+      "methodology_note": "Paid vehicle miles divided by total vehicle miles. This is not passenger occupancy and not the share of hours a vehicle is active.",
+      "unit": "ratio",
+      "display_unit": "%",
+      "layer": "cross_layer",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "higher"
+      }
+    },
+    "vehicle_av_capex": {
+      "label": "Vehicle and AV-kit cost",
+      "value": 175000,
+      "range": {
+        "low": 150000,
+        "base": 175000,
+        "high": 200000
+      },
+      "slider": {
+        "min": 75000,
+        "max": 225000,
+        "step": 5000
+      },
+      "confidence": "low-medium",
+      "range_basis": "Current-generation premium-EV plus autonomous-integration scenario range. The exact Waymo all-in cost is not publicly disclosed.",
+      "justification": "Vehicle cost matters through depreciation, but its effect depends equally on useful lifetime miles, residual value and paid-mile utilisation.",
+      "source_ids": [
+        "src_depreciation",
+        "src_waymo_driver6"
+      ],
+      "methodology_note": "Includes the base vehicle and installed autonomous-driving hardware. It excludes depot infrastructure and central platform development.",
+      "unit": "USD per vehicle",
+      "layer": "vehicle",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "lower"
+      }
+    },
+    "vehicle_lifetime_miles": {
+      "label": "Vehicle lifetime miles",
+      "value": 250000,
+      "range": {
+        "low": 200000,
+        "base": 250000,
+        "high": 350000
+      },
+      "slider": {
+        "min": 150000,
+        "max": 450000,
+        "step": 10000
+      },
+      "confidence": "medium-low",
+      "range_basis": "Scenario range reflecting high-mileage commercial use, accelerated hardware obsolescence and uncertain robotaxi residual markets.",
+      "justification": "A cheaper vehicle does not necessarily improve economics if high duty cycles, battery wear or AV-hardware obsolescence shorten its productive life.",
+      "source_ids": [
+        "src_depreciation"
+      ],
+      "methodology_note": "Lifetime total vehicle miles before retirement or major economic replacement, not paid miles.",
+      "unit": "total vehicle miles",
+      "layer": "vehicle",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "higher"
+      }
+    },
+    "direct_running_cost_per_total_mile": {
+      "label": "Direct running cost",
+      "value": 0.31,
+      "range": {
+        "low": 0.22,
+        "base": 0.31,
+        "high": 0.5
+      },
+      "slider": {
+        "min": 0.15,
+        "max": 0.65,
+        "step": 0.01
+      },
+      "confidence": "low-medium",
+      "range_basis": "Consolidated scenario for energy, routine EV maintenance, AV-specific maintenance and insurance/liability reserve. The range reflects uncertainty in AV repair frequency and insurance translation.",
+      "justification": "This combines the direct exposure-mile costs that move with vehicle use while keeping depreciation and local fleet operations separate.",
+      "source_ids": [
+        "src_energy_depot",
+        "src_ops_labour",
+        "src_waymo_swissre",
+        "src_afdc_ev_maintenance"
+      ],
+      "methodology_note": "Includes electricity, routine maintenance, AV-specific maintenance and insurance/liability reserve. Excludes depreciation, depot operations and fixed city cost.",
+      "unit": "USD per total vehicle mile",
+      "layer": "vehicle",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "lower"
+      }
+    },
+    "local_fleet_ops_cost_per_total_mile": {
+      "label": "Local fleet-operations cost",
+      "value": 0.2,
+      "range": {
+        "low": 0.1,
+        "base": 0.2,
+        "high": 0.4
+      },
+      "slider": {
+        "min": 0.05,
+        "max": 0.55,
+        "step": 0.01
+      },
+      "confidence": "low-medium",
+      "range_basis": "Scenario range for depot readiness, charging infrastructure, remote assistance, rider support and field response after overlap controls.",
+      "justification": "Removing the driver shifts labour and infrastructure into depots, control centres and field operations. Local density determines how efficiently those functions are shared.",
+      "source_ids": [
+        "src_ops_labour",
+        "src_energy_depot",
+        "src_scalability"
+      ],
+      "methodology_note": "Variable local cost per total vehicle mile. It excludes the separate annual city cost so density effects remain visible.",
+      "unit": "USD per total vehicle mile",
+      "layer": "fleet_city",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "lower"
+      }
+    },
+    "active_vehicles_per_city": {
+      "label": "Active vehicles per city",
+      "value": 500,
+      "range": {
+        "low": 250,
+        "base": 500,
+        "high": 1000
+      },
+      "slider": {
+        "min": 100,
+        "max": 2000,
+        "step": 50
+      },
+      "confidence": "low",
+      "range_basis": "Scenario range designed to test local operating density. Public operator fleet counts are incomplete and may include test, reserve and inactive vehicles.",
+      "justification": "Fleet density dilutes recurring city costs and, together with the number of cities, determines how many paid miles absorb the central platform.",
+      "source_ids": [
+        "src_model_base_v1",
+        "src_scalability"
+      ],
+      "methodology_note": "Active commercial vehicles in an average city. Total fleet is derived as vehicles per city multiplied by the number of cities.",
+      "unit": "vehicles per city",
+      "layer": "fleet_city",
+      "ui_group": "main",
+      "solver": {
+        "enabled": true,
+        "improves_when": "higher"
+      }
+    },
+    "number_of_cities": {
+      "label": "Number of active cities",
+      "value": 6,
+      "range": {
+        "low": 3,
+        "base": 6,
+        "high": 15
+      },
+      "slider": {
+        "min": 1,
+        "max": 30,
+        "step": 1
+      },
+      "confidence": "low",
+      "range_basis": "Scenario architecture rather than a claim about any operator's exact commercial footprint. Each city is assumed to have the same average active fleet and annual city cost.",
+      "justification": "More cities expand the paid-mile denominator but also add local fixed cost. Whether expansion creates leverage depends on fleet density and platform reuse.",
+      "source_ids": [
+        "src_model_base_v1",
+        "src_scalability"
+      ],
+      "methodology_note": "Active commercial city-equivalents. A large metropolitan service area and a small city are treated as equal units in v0.1, which is a deliberate simplification.",
+      "unit": "cities",
+      "layer": "replication",
+      "ui_group": "advanced",
+      "solver": {
+        "enabled": false,
+        "reason": "Direction can change depending on city density and annual city cost."
+      }
+    },
+    "annual_platform_cost": {
+      "label": "Annual platform cost",
+      "value": 250000000,
+      "range": {
+        "low": 150000000,
+        "base": 250000000,
+        "high": 400000000
+      },
+      "slider": {
+        "min": 50000000,
+        "max": 600000000,
+        "step": 10000000
+      },
+      "confidence": "low",
+      "range_basis": "Transparent allocated scenario pool for core autonomy, AI-production activity, simulation, data and software assurance. It is not derived from Alphabet Other Bets as a Waymo P&L.",
+      "justification": "The platform layer remains a continuing production system. Its economic test is whether paid miles and validated service coverage grow faster than the burden required to produce them.",
+      "source_ids": [
+        "src_scalability",
+        "src_waymo_scaling",
+        "src_waymo_world_model"
+      ],
+      "methodology_note": "Annual enterprise cost shared across all active cities and vehicles. Regional and city-specific costs are excluded and represented elsewhere.",
+      "unit": "USD per year",
+      "layer": "platform",
+      "ui_group": "advanced",
+      "solver": {
+        "enabled": false,
+        "reason": "Advanced variable; can be solved analytically in methodology outputs if required."
+      }
+    },
+    "annual_city_cost_per_city": {
+      "label": "Annual city and launch burden",
+      "value": 7000000,
+      "range": {
+        "low": 4000000,
+        "base": 7000000,
+        "high": 12000000
+      },
+      "slider": {
+        "min": 2000000,
+        "max": 20000000,
+        "step": 500000
+      },
+      "confidence": "low",
+      "range_basis": "Combines recurring city overhead with annualised launch and ODD-validation cost. Public company-level city-launch economics are not disclosed.",
+      "justification": "Every new city reopens part of the cost stack. The key replication test is whether this annualised burden falls as launch playbooks, validation evidence and infrastructure partnerships become reusable.",
+      "source_ids": [
+        "src_scalability",
+        "src_model_base_v1"
+      ],
+      "methodology_note": "Annual city-equivalent cost including recurring local overhead and amortised launch burden. Variable depot operations are excluded.",
+      "unit": "USD per city-year",
+      "layer": "replication",
+      "ui_group": "advanced",
+      "solver": {
+        "enabled": false,
+        "reason": "Advanced variable; can be solved analytically in methodology outputs if required."
+      }
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "model_version": "0.1.0",
+  "sources": {
+    "src_model_base_v1": {
+      "citation": "Robotaxi Transparent Base-Case Model v1",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "internal_model",
+      "note": "Transparent scenario model derived from the consolidated research. Not a claimed Waymo P&L."
+    },
+    "src_cost_architecture": {
+      "citation": "Consolidated Robotaxi Cost Architecture Research Output v1",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "consolidated_research",
+      "note": "Supports the three-layer taxonomy and double-counting controls."
+    },
+    "src_depreciation": {
+      "citation": "Consolidated Robotaxi Depreciation and Residual Value Research v1",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "consolidated_research",
+      "note": "Supports capex, useful-life and residual-value scenario treatment."
+    },
+    "src_utilisation": {
+      "citation": "Sprint 2 Consolidation: Utilisation, Empty Miles and Paid-Mile Ratio",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "consolidated_research",
+      "note": "Supports the 0.55 base paid-mile ratio and 45% to 65% scenario range."
+    },
+    "src_energy_depot": {
+      "citation": "Sprint 3 Consolidation: Energy, Charging, Depot and Infrastructure",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "consolidated_research",
+      "note": "Supports direct running-cost and physical-enablement ranges."
+    },
+    "src_ops_labour": {
+      "citation": "Sprint 4 and Post-Driver Labour Consolidations",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "consolidated_research",
+      "note": "Supports the existence and scenario treatment of local fleet operations."
+    },
+    "src_scalability": {
+      "citation": "Robotaxi Scalability High-Confidence Consolidated Research v1",
+      "url": null,
+      "accessed": "2026-06-11",
+      "type": "consolidated_research",
+      "note": "Supports the four scalability mechanisms and Layer 3 decomposition."
+    },
+    "src_waymo_scaling": {
+      "citation": "Waymo, New Insights for Scaling Laws in Autonomous Driving, 13 June 2025",
+      "url": "https://waymo.com/blog/2025/06/scaling-laws-in-autonomous-driving/",
+      "accessed": "2026-06-11",
+      "type": "primary_technical",
+      "note": "Supports ongoing training-data and compute productivity, not a dollar platform-cost estimate."
+    },
+    "src_waymo_world_model": {
+      "citation": "Waymo, The Waymo World Model: A New Frontier for Autonomous Driving Simulation, 6 February 2026",
+      "url": "https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation/",
+      "accessed": "2026-06-11",
+      "type": "primary_technical",
+      "note": "Supports simulation as a continuing production activity."
+    },
+    "src_waymo_driver6": {
+      "citation": "Waymo, Meet the 6th-generation Waymo Driver, August 2024",
+      "url": "https://waymo.com/blog/2024/08/meet-the-6th-generation-waymo-driver/",
+      "accessed": "2026-06-11",
+      "type": "primary_company",
+      "note": "Supports sensor rationalisation and cost-down direction, but not an all-in vehicle-cost figure."
+    },
+    "src_afdc_ev_maintenance": {
+      "citation": "US Department of Energy, Alternative Fuels Data Center, Maintenance and Safety of Electric Vehicles",
+      "url": "https://afdc.energy.gov/vehicles/electric-maintenance",
+      "accessed": "2026-06-11",
+      "type": "public_authority",
+      "note": "EV maintenance benchmark, not robotaxi-specific."
+    },
+    "src_waymo_swissre": {
+      "citation": "Waymo and Swiss Re claims-frequency research",
+      "url": "https://arxiv.org/abs/2403.14648",
+      "accessed": "2026-06-11",
+      "type": "actuarial_academic",
+      "note": "Supports lower claim frequency, not a proportional insurance-premium reduction."
+    }
+  }
+}

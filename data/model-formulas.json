@@ -1,0 +1,148 @@
+{
+  "model_version": "0.1.0",
+  "primary_denominator": "USD per paid vehicle-mile",
+  "symbols": {
+    "R": "net_revenue_per_paid_mile",
+    "u": "paid_mile_ratio",
+    "C": "vehicle_av_capex",
+    "rv": "residual_value_rate",
+    "L": "vehicle_lifetime_miles",
+    "d": "direct_running_cost_per_total_mile",
+    "o": "local_fleet_ops_cost_per_total_mile",
+    "V": "active_vehicles_per_city",
+    "N": "number_of_cities",
+    "M": "annual_total_vehicle_miles_per_vehicle",
+    "P": "annual_platform_cost",
+    "F": "annual_city_cost_per_city"
+  },
+  "derived_values": {
+    "total_active_fleet": {
+      "equation": "V * N",
+      "code_expression": "inputs.active_vehicles_per_city * inputs.number_of_cities"
+    },
+    "annual_total_vehicle_miles": {
+      "equation": "V * N * M",
+      "code_expression": "totalActiveFleet * constants.annual_total_vehicle_miles_per_vehicle"
+    },
+    "annual_paid_miles": {
+      "equation": "V * N * M * u",
+      "code_expression": "annualTotalVehicleMiles * inputs.paid_mile_ratio"
+    },
+    "depreciation_per_total_mile": {
+      "equation": "C * (1 - rv) / L",
+      "code_expression": "inputs.vehicle_av_capex * (1 - constants.residual_value_rate) / inputs.vehicle_lifetime_miles"
+    },
+    "vehicle_cost_per_paid_mile": {
+      "equation": "(depreciation_per_total_mile + d) / u",
+      "code_expression": "(depreciationPerTotalMile + inputs.direct_running_cost_per_total_mile) / inputs.paid_mile_ratio"
+    },
+    "local_variable_ops_per_paid_mile": {
+      "equation": "o / u",
+      "code_expression": "inputs.local_fleet_ops_cost_per_total_mile / inputs.paid_mile_ratio"
+    },
+    "city_fixed_cost_per_paid_mile": {
+      "equation": "F / (V * M * u)",
+      "code_expression": "inputs.annual_city_cost_per_city / (inputs.active_vehicles_per_city * constants.annual_total_vehicle_miles_per_vehicle * inputs.paid_mile_ratio)"
+    },
+    "platform_cost_per_paid_mile": {
+      "equation": "P / (V * N * M * u)",
+      "code_expression": "inputs.annual_platform_cost / annualPaidMiles"
+    }
+  },
+  "primary_outputs": {
+    "direct_cost_per_paid_mile": {
+      "definition": "Vehicle, direct running, local variable operations and annual city burden, before central platform cost.",
+      "equation": "vehicle_cost_per_paid_mile + local_variable_ops_per_paid_mile + city_fixed_cost_per_paid_mile",
+      "code_expression": "vehicleCostPerPaidMile + localVariableOpsPerPaidMile + cityFixedCostPerPaidMile"
+    },
+    "city_contribution_per_paid_mile": {
+      "definition": "Net revenue remaining after all vehicle and local city costs.",
+      "equation": "R - direct_cost_per_paid_mile",
+      "code_expression": "inputs.net_revenue_per_paid_mile - directCostPerPaidMile"
+    },
+    "enterprise_result_per_paid_mile": {
+      "definition": "City contribution after central platform cost.",
+      "equation": "city_contribution_per_paid_mile - platform_cost_per_paid_mile",
+      "code_expression": "cityContributionPerPaidMile - platformCostPerPaidMile"
+    },
+    "break_even_gap_per_paid_mile": {
+      "definition": "Additional contribution required to reach zero enterprise result.",
+      "equation": "max(0, -enterprise_result_per_paid_mile)",
+      "code_expression": "Math.max(0, -enterpriseResultPerPaidMile)"
+    },
+    "break_even_solutions": {
+      "definition": "For each enabled main variable, hold all other inputs constant and solve enterprise_result_per_paid_mile = 0 within that variable's credible low-high range.",
+      "algorithm": "bounded bisection",
+      "tolerance": 1e-07,
+      "max_iterations": 100,
+      "achievable_rule": "A solution is achievable only if the enterprise-result function is zero at a boundary or changes sign across the credible low-high range.",
+      "non_achievable_message": "Not achievable within the evidence-based range."
+    }
+  },
+  "sankey_flows": [
+    {
+      "source": "Net revenue",
+      "target": "Vehicle and engineering",
+      "value_expression": "vehicleCostPerPaidMile"
+    },
+    {
+      "source": "Net revenue",
+      "target": "Local fleet operations",
+      "value_expression": "localVariableOpsPerPaidMile + cityFixedCostPerPaidMile"
+    },
+    {
+      "source": "Net revenue",
+      "target": "City contribution",
+      "value_expression": "Math.max(0, cityContributionPerPaidMile)"
+    },
+    {
+      "source": "City contribution",
+      "target": "Platform and replication",
+      "value_expression": "Math.min(Math.max(0, cityContributionPerPaidMile), platformCostPerPaidMile)"
+    },
+    {
+      "source": "External funding",
+      "target": "Platform and replication",
+      "value_expression": "Math.max(0, -enterpriseResultPerPaidMile)"
+    },
+    {
+      "source": "City contribution",
+      "target": "Enterprise surplus",
+      "value_expression": "Math.max(0, enterpriseResultPerPaidMile)"
+    }
+  ],
+  "tornado_methodology": {
+    "baseline_metric": "enterprise_result_per_paid_mile",
+    "variables": "All seven main variables",
+    "low_case": "Set one variable to range.low while holding all others at the current scenario value.",
+    "high_case": "Set one variable to range.high while holding all others at the current scenario value.",
+    "impact_low": "enterpriseResultAtLow - baselineEnterpriseResult",
+    "impact_high": "enterpriseResultAtHigh - baselineEnterpriseResult",
+    "sorting": "Descending by max(abs(impact_low), abs(impact_high))",
+    "confidence_display": "Separate HTML confidence column or badge, not colour alone.",
+    "methodology_note": "Range widths reflect the evidence base and genuine uncertainty. They are not normalised to make variables appear equally important."
+  },
+  "test_cases": {
+    "early_growth_expected_approx": {
+      "direct_cost_per_paid_mile": 2.4364,
+      "city_contribution_per_paid_mile": 1.0636,
+      "platform_cost_per_paid_mile": 2.1645,
+      "enterprise_result_per_paid_mile": -1.1009,
+      "break_even_gap_per_paid_mile": 1.1009
+    },
+    "mature_dense_expected_approx": {
+      "direct_cost_per_paid_mile": 1.4862,
+      "city_contribution_per_paid_mile": 1.9138,
+      "platform_cost_per_paid_mile": 0.8449,
+      "enterprise_result_per_paid_mile": 1.069,
+      "break_even_gap_per_paid_mile": 0
+    },
+    "replicated_multicity_expected_approx": {
+      "direct_cost_per_paid_mile": 1.1837,
+      "city_contribution_per_paid_mile": 2.0163,
+      "platform_cost_per_paid_mile": 0.3628,
+      "enterprise_result_per_paid_mile": 1.6535,
+      "break_even_gap_per_paid_mile": 0
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "model_version": "0.1.0",
+  "base_assumptions": "assumptions.json",
+  "presets": {
+    "early_growth": {
+      "label": "Early growth network",
+      "description": "Current-generation vehicle economics, moderate utilisation, limited local density and a high platform burden.",
+      "overrides": {}
+    },
+    "mature_dense": {
+      "label": "Mature dense-city network",
+      "description": "Higher paid-mile utilisation, stronger local density and improved vehicle and operating productivity, with a still-significant central platform.",
+      "overrides": {
+        "net_revenue_per_paid_mile": 3.4,
+        "paid_mile_ratio": 0.62,
+        "vehicle_av_capex": 140000,
+        "vehicle_lifetime_miles": 300000,
+        "direct_running_cost_per_total_mile": 0.28,
+        "local_fleet_ops_cost_per_total_mile": 0.15,
+        "active_vehicles_per_city": 1000,
+        "annual_platform_cost": 220000000,
+        "annual_city_cost_per_city": 5000000
+      }
+    },
+    "replicated_multicity": {
+      "label": "Replicated multi-city platform",
+      "description": "A larger network in which vehicle, local operations and launch playbooks have improved and central platform cost is absorbed across more paid miles.",
+      "overrides": {
+        "net_revenue_per_paid_mile": 3.2,
+        "paid_mile_ratio": 0.63,
+        "vehicle_av_capex": 120000,
+        "vehicle_lifetime_miles": 350000,
+        "direct_running_cost_per_total_mile": 0.25,
+        "local_fleet_ops_cost_per_total_mile": 0.13,
+        "active_vehicles_per_city": 1000,
+        "number_of_cities": 15,
+        "annual_platform_cost": 240000000,
+        "annual_city_cost_per_city": 4000000
+      }
+    }
+  }
+}
