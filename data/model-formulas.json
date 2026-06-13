@@ -1,11 +1,13 @@
 {
-  "model_version": "0.1.0",
+  "model_version": "0.2.3",
   "primary_denominator": "USD per paid vehicle-mile",
   "symbols": {
+    "G": "gross_fare_per_paid_mile",
+    "q": "revenue_leakage_rate",
     "R": "net_revenue_per_paid_mile",
     "u": "paid_mile_ratio",
     "C": "vehicle_av_capex",
-    "rv": "residual_value_rate",
+    "rv": "residual_value_pct",
     "L": "vehicle_lifetime_miles",
     "d": "direct_running_cost_per_total_mile",
     "o": "local_fleet_ops_cost_per_total_mile",
@@ -16,37 +18,37 @@
     "F": "annual_city_cost_per_city"
   },
   "derived_values": {
+    "net_revenue_per_paid_mile": {
+      "equation": "G × (1 − q)",
+      "code_expression": "inputs.gross_fare_per_paid_mile * (1 - inputs.revenue_leakage_rate)"
+    },
     "total_active_fleet": {
-      "equation": "V * N",
+      "equation": "V × N",
       "code_expression": "inputs.active_vehicles_per_city * inputs.number_of_cities"
     },
     "annual_total_vehicle_miles": {
-      "equation": "V * N * M",
+      "equation": "V × N × M",
       "code_expression": "totalActiveFleet * constants.annual_total_vehicle_miles_per_vehicle"
     },
     "annual_paid_miles": {
-      "equation": "V * N * M * u",
+      "equation": "V × N × M × u",
       "code_expression": "annualTotalVehicleMiles * inputs.paid_mile_ratio"
     },
     "depreciation_per_total_mile": {
-      "equation": "C * (1 - rv) / L",
-      "code_expression": "inputs.vehicle_av_capex * (1 - constants.residual_value_rate) / inputs.vehicle_lifetime_miles"
+      "equation": "(C × (1 − rv)) ÷ L",
+      "code_expression": "(inputs.vehicle_av_capex * (1 - inputs.residual_value_pct)) / inputs.vehicle_lifetime_miles"
     },
     "vehicle_cost_per_paid_mile": {
-      "equation": "(depreciation_per_total_mile + d) / u",
+      "equation": "(depreciation_per_total_mile + d) ÷ u",
       "code_expression": "(depreciationPerTotalMile + inputs.direct_running_cost_per_total_mile) / inputs.paid_mile_ratio"
     },
     "local_variable_ops_per_paid_mile": {
-      "equation": "o / u",
+      "equation": "o ÷ u",
       "code_expression": "inputs.local_fleet_ops_cost_per_total_mile / inputs.paid_mile_ratio"
     },
     "city_fixed_cost_per_paid_mile": {
-      "equation": "F / (V * M * u)",
+      "equation": "F ÷ (V × M × u)",
       "code_expression": "inputs.annual_city_cost_per_city / (inputs.active_vehicles_per_city * constants.annual_total_vehicle_miles_per_vehicle * inputs.paid_mile_ratio)"
-    },
-    "platform_cost_per_paid_mile": {
-      "equation": "P / (V * N * M * u)",
-      "code_expression": "inputs.annual_platform_cost / annualPaidMiles"
     }
   },
   "primary_outputs": {
@@ -57,29 +59,44 @@
     },
     "city_contribution_per_paid_mile": {
       "definition": "Net revenue remaining after all vehicle and local city costs.",
-      "equation": "R - direct_cost_per_paid_mile",
-      "code_expression": "inputs.net_revenue_per_paid_mile - directCostPerPaidMile"
+      "equation": "R − direct_cost_per_paid_mile",
+      "code_expression": "netRevenuePerPaidMile - directCostPerPaidMile"
+    },
+    "platform_cost_per_paid_mile": {
+      "definition": "Annual platform cost allocated across annual paid miles.",
+      "equation": "P ÷ (V × N × M × u)",
+      "code_expression": "inputs.annual_platform_cost / annualPaidMiles"
     },
     "enterprise_result_per_paid_mile": {
       "definition": "City contribution after central platform cost.",
-      "equation": "city_contribution_per_paid_mile - platform_cost_per_paid_mile",
+      "equation": "city_contribution_per_paid_mile − platform_cost_per_paid_mile",
       "code_expression": "cityContributionPerPaidMile - platformCostPerPaidMile"
     },
     "break_even_gap_per_paid_mile": {
       "definition": "Additional contribution required to reach zero enterprise result.",
-      "equation": "max(0, -enterprise_result_per_paid_mile)",
+      "equation": "max(0, −enterprise_result_per_paid_mile)",
       "code_expression": "Math.max(0, -enterpriseResultPerPaidMile)"
     },
     "break_even_solutions": {
-      "definition": "For each enabled main variable, hold all other inputs constant and solve enterprise_result_per_paid_mile = 0 within that variable's credible low-high range.",
+      "definition": "For each enabled main variable, hold all other inputs constant and solve enterprise_result_per_paid_mile = 0 within that architecture's credible low-high range.",
       "algorithm": "bounded bisection",
       "tolerance": 1e-07,
       "max_iterations": 100,
-      "achievable_rule": "A solution is achievable only if the enterprise-result function is zero at a boundary or changes sign across the credible low-high range.",
+      "achievable_rule": "A solution is achievable only if the result equals zero at a boundary or changes sign across the credible low-high range.",
       "non_achievable_message": "Not achievable within the evidence-based range."
     }
   },
   "sankey_flows": [
+    {
+      "source": "Gross fare",
+      "target": "Revenue leakage",
+      "value_expression": "inputs.gross_fare_per_paid_mile * inputs.revenue_leakage_rate"
+    },
+    {
+      "source": "Gross fare",
+      "target": "Net revenue",
+      "value_expression": "netRevenuePerPaidMile"
+    },
     {
       "source": "Net revenue",
       "target": "Vehicle and engineering",
@@ -113,36 +130,256 @@
   ],
   "tornado_methodology": {
     "baseline_metric": "enterprise_result_per_paid_mile",
-    "variables": "All seven main variables",
-    "low_case": "Set one variable to range.low while holding all others at the current scenario value.",
-    "high_case": "Set one variable to range.high while holding all others at the current scenario value.",
+    "variables": "All nine main variables for the selected architecture",
+    "low_case": "Set one variable to that architecture's range.low while holding all others at the current scenario value.",
+    "high_case": "Set one variable to that architecture's range.high while holding all others at the current scenario value.",
     "impact_low": "enterpriseResultAtLow - baselineEnterpriseResult",
     "impact_high": "enterpriseResultAtHigh - baselineEnterpriseResult",
     "sorting": "Descending by max(abs(impact_low), abs(impact_high))",
     "confidence_display": "Separate HTML confidence column or badge, not colour alone.",
     "methodology_note": "Range widths reflect the evidence base and genuine uncertainty. They are not normalised to make variables appear equally important."
   },
+  "methodology_notes": {
+    "architecture_vs_maturity": "Architecture and maturity are separate dimensions because combining a Tesla vehicle-cost assumption with Waymo-shaped operating, platform and city-launch assumptions produces an incoherent hybrid. The architecture selector changes linked defaults, credible ranges, confidence and methodology; the maturity selector changes how developed that architecture has become.",
+    "energy_in_direct_running_cost": "Energy efficiency is folded into direct running cost rather than exposed as a separate slider because the public interface is limited to the nine highest-leverage variables. This is a prioritisation decision, not a claim that energy is unimportant. Architecture-specific energy evidence is reflected in the direct-running-cost defaults and ranges.",
+    "waymo_city_and_fleet_basis": "The Waymo-like default uses 11 current rider-service markets and 300 active-fleet-equivalent vehicles per city. The city count is directly observed. The vehicle-density default is triangulated from Waymo's reported weekly mileage and the model's annual-mileage assumption. The 250–1,000 range is retained for experimentation."
+  },
   "test_cases": {
-    "early_growth_expected_approx": {
-      "direct_cost_per_paid_mile": 2.4364,
-      "city_contribution_per_paid_mile": 1.0636,
-      "platform_cost_per_paid_mile": 2.1645,
-      "enterprise_result_per_paid_mile": -1.1009,
-      "break_even_gap_per_paid_mile": 1.1009
+    "canonical_presets": {
+      "waymo_like_early_growth": {
+        "architecture": "waymo_like",
+        "inputs": {
+          "gross_fare_per_paid_mile": 4.0,
+          "revenue_leakage_rate": 0.1,
+          "paid_mile_ratio": 0.55,
+          "vehicle_av_capex": 175000,
+          "vehicle_lifetime_miles": 250000,
+          "residual_value_pct": 0.1,
+          "direct_running_cost_per_total_mile": 0.31,
+          "local_fleet_ops_cost_per_total_mile": 0.2,
+          "active_vehicles_per_city": 300,
+          "number_of_cities": 11,
+          "annual_platform_cost": 250000000,
+          "annual_city_cost_per_city": 7000000
+        },
+        "expected": {
+          "direct_cost_per_paid_mile": 2.6787878788,
+          "city_contribution_per_paid_mile": 0.9212121212,
+          "platform_cost_per_paid_mile": 1.9677292405,
+          "enterprise_result_per_paid_mile": -1.0465171192,
+          "break_even_gap_per_paid_mile": 1.0465171192
+        },
+        "diagnostics": {
+          "net_revenue_per_paid_mile": 3.6,
+          "depreciation_per_total_mile": 0.63,
+          "annual_paid_miles": 127050000.0,
+          "total_active_fleet": 3300
+        }
+      },
+      "waymo_like_mature_dense": {
+        "architecture": "waymo_like",
+        "inputs": {
+          "gross_fare_per_paid_mile": 3.8,
+          "revenue_leakage_rate": 0.1,
+          "paid_mile_ratio": 0.62,
+          "vehicle_av_capex": 140000,
+          "vehicle_lifetime_miles": 300000,
+          "residual_value_pct": 0.15,
+          "direct_running_cost_per_total_mile": 0.28,
+          "local_fleet_ops_cost_per_total_mile": 0.15,
+          "active_vehicles_per_city": 1000,
+          "number_of_cities": 11,
+          "annual_platform_cost": 220000000,
+          "annual_city_cost_per_city": 5000000
+        },
+        "expected": {
+          "direct_cost_per_paid_mile": 1.4485407066,
+          "city_contribution_per_paid_mile": 1.9714592934,
+          "platform_cost_per_paid_mile": 0.4608294931,
+          "enterprise_result_per_paid_mile": 1.5106298003,
+          "break_even_gap_per_paid_mile": 0.0
+        },
+        "diagnostics": {
+          "net_revenue_per_paid_mile": 3.42,
+          "depreciation_per_total_mile": 0.3966666667,
+          "annual_paid_miles": 477400000.0,
+          "total_active_fleet": 11000
+        }
+      },
+      "waymo_like_replicated_multicity": {
+        "architecture": "waymo_like",
+        "inputs": {
+          "gross_fare_per_paid_mile": 3.5,
+          "revenue_leakage_rate": 0.1,
+          "paid_mile_ratio": 0.63,
+          "vehicle_av_capex": 120000,
+          "vehicle_lifetime_miles": 350000,
+          "residual_value_pct": 0.2,
+          "direct_running_cost_per_total_mile": 0.25,
+          "local_fleet_ops_cost_per_total_mile": 0.13,
+          "active_vehicles_per_city": 1000,
+          "number_of_cities": 25,
+          "annual_platform_cost": 240000000,
+          "annual_city_cost_per_city": 4000000
+        },
+        "expected": {
+          "direct_cost_per_paid_mile": 1.1292517007,
+          "city_contribution_per_paid_mile": 2.0207482993,
+          "platform_cost_per_paid_mile": 0.2176870748,
+          "enterprise_result_per_paid_mile": 1.8030612245,
+          "break_even_gap_per_paid_mile": 0.0
+        },
+        "diagnostics": {
+          "net_revenue_per_paid_mile": 3.15,
+          "depreciation_per_total_mile": 0.2742857143,
+          "annual_paid_miles": 1102500000.0,
+          "total_active_fleet": 25000
+        }
+      },
+      "cybercab_early_growth": {
+        "architecture": "cybercab",
+        "inputs": {
+          "gross_fare_per_paid_mile": 3.0,
+          "revenue_leakage_rate": 0.0,
+          "paid_mile_ratio": 0.5,
+          "vehicle_av_capex": 60000,
+          "vehicle_lifetime_miles": 250000,
+          "residual_value_pct": 0.05,
+          "direct_running_cost_per_total_mile": 0.25,
+          "local_fleet_ops_cost_per_total_mile": 0.2,
+          "active_vehicles_per_city": 300,
+          "number_of_cities": 3,
+          "annual_platform_cost": 300000000,
+          "annual_city_cost_per_city": 5000000
+        },
+        "expected": {
+          "direct_cost_per_paid_mile": 1.8321904762,
+          "city_contribution_per_paid_mile": 1.1678095238,
+          "platform_cost_per_paid_mile": 9.5238095238,
+          "enterprise_result_per_paid_mile": -8.356,
+          "break_even_gap_per_paid_mile": 8.356
+        },
+        "diagnostics": {
+          "net_revenue_per_paid_mile": 3.0,
+          "depreciation_per_total_mile": 0.228,
+          "annual_paid_miles": 31500000.0,
+          "total_active_fleet": 900
+        }
+      },
+      "cybercab_mature_dense": {
+        "architecture": "cybercab",
+        "inputs": {
+          "gross_fare_per_paid_mile": 2.75,
+          "revenue_leakage_rate": 0.0,
+          "paid_mile_ratio": 0.62,
+          "vehicle_av_capex": 45000,
+          "vehicle_lifetime_miles": 300000,
+          "residual_value_pct": 0.1,
+          "direct_running_cost_per_total_mile": 0.2,
+          "local_fleet_ops_cost_per_total_mile": 0.15,
+          "active_vehicles_per_city": 1000,
+          "number_of_cities": 6,
+          "annual_platform_cost": 275000000,
+          "annual_city_cost_per_city": 4000000
+        },
+        "expected": {
+          "direct_cost_per_paid_mile": 0.8744239631,
+          "city_contribution_per_paid_mile": 1.8755760369,
+          "platform_cost_per_paid_mile": 1.0560675883,
+          "enterprise_result_per_paid_mile": 0.8195084485,
+          "break_even_gap_per_paid_mile": 0.0
+        },
+        "diagnostics": {
+          "net_revenue_per_paid_mile": 2.75,
+          "depreciation_per_total_mile": 0.135,
+          "annual_paid_miles": 260400000.0,
+          "total_active_fleet": 6000
+        }
+      },
+      "cybercab_replicated_multicity": {
+        "architecture": "cybercab",
+        "inputs": {
+          "gross_fare_per_paid_mile": 2.5,
+          "revenue_leakage_rate": 0.05,
+          "paid_mile_ratio": 0.65,
+          "vehicle_av_capex": 35000,
+          "vehicle_lifetime_miles": 350000,
+          "residual_value_pct": 0.1,
+          "direct_running_cost_per_total_mile": 0.18,
+          "local_fleet_ops_cost_per_total_mile": 0.13,
+          "active_vehicles_per_city": 1000,
+          "number_of_cities": 15,
+          "annual_platform_cost": 300000000,
+          "annual_city_cost_per_city": 3000000
+        },
+        "expected": {
+          "direct_cost_per_paid_mile": 0.6813186813,
+          "city_contribution_per_paid_mile": 1.6936813187,
+          "platform_cost_per_paid_mile": 0.4395604396,
+          "enterprise_result_per_paid_mile": 1.2541208791,
+          "break_even_gap_per_paid_mile": 0.0
+        },
+        "diagnostics": {
+          "net_revenue_per_paid_mile": 2.375,
+          "depreciation_per_total_mile": 0.09,
+          "annual_paid_miles": 682500000.0,
+          "total_active_fleet": 15000
+        }
+      }
     },
-    "mature_dense_expected_approx": {
-      "direct_cost_per_paid_mile": 1.4862,
-      "city_contribution_per_paid_mile": 1.9138,
-      "platform_cost_per_paid_mile": 0.8449,
-      "enterprise_result_per_paid_mile": 1.069,
-      "break_even_gap_per_paid_mile": 0
-    },
-    "replicated_multicity_expected_approx": {
-      "direct_cost_per_paid_mile": 1.1837,
-      "city_contribution_per_paid_mile": 2.0163,
-      "platform_cost_per_paid_mile": 0.3628,
-      "enterprise_result_per_paid_mile": 1.6535,
-      "break_even_gap_per_paid_mile": 0
+    "edge_cases": {
+      "zero_revenue_leakage": {
+        "architecture": "waymo_like",
+        "purpose": "Verify net revenue equals gross fare when leakage is zero.",
+        "inputs": {
+          "gross_fare_per_paid_mile": 4.0,
+          "revenue_leakage_rate": 0.0,
+          "paid_mile_ratio": 0.55,
+          "vehicle_av_capex": 175000,
+          "vehicle_lifetime_miles": 250000,
+          "residual_value_pct": 0.1,
+          "direct_running_cost_per_total_mile": 0.31,
+          "local_fleet_ops_cost_per_total_mile": 0.2,
+          "active_vehicles_per_city": 300,
+          "number_of_cities": 11,
+          "annual_platform_cost": 250000000,
+          "annual_city_cost_per_city": 7000000
+        },
+        "expected": {
+          "net_revenue_per_paid_mile": 4.0,
+          "direct_cost_per_paid_mile": 2.6787878788,
+          "city_contribution_per_paid_mile": 1.3212121212,
+          "platform_cost_per_paid_mile": 1.9677292405,
+          "enterprise_result_per_paid_mile": -0.6465171192,
+          "break_even_gap_per_paid_mile": 0.6465171192
+        }
+      },
+      "zero_residual_value": {
+        "architecture": "waymo_like",
+        "purpose": "Verify depreciation equals capex divided by lifetime miles when residual value is zero.",
+        "inputs": {
+          "gross_fare_per_paid_mile": 4.0,
+          "revenue_leakage_rate": 0.1,
+          "paid_mile_ratio": 0.55,
+          "vehicle_av_capex": 175000,
+          "vehicle_lifetime_miles": 250000,
+          "residual_value_pct": 0.0,
+          "direct_running_cost_per_total_mile": 0.31,
+          "local_fleet_ops_cost_per_total_mile": 0.2,
+          "active_vehicles_per_city": 300,
+          "number_of_cities": 11,
+          "annual_platform_cost": 250000000,
+          "annual_city_cost_per_city": 7000000
+        },
+        "expected": {
+          "depreciation_per_total_mile": 0.7,
+          "direct_cost_per_paid_mile": 2.8060606061,
+          "city_contribution_per_paid_mile": 0.7939393939,
+          "platform_cost_per_paid_mile": 1.9677292405,
+          "enterprise_result_per_paid_mile": -1.1737898465,
+          "break_even_gap_per_paid_mile": 1.1737898465
+        }
+      }
     }
   }
 }

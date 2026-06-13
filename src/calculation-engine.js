@@ -1,11 +1,14 @@
 // calculation-engine.js — pure calculation logic for the robotaxi economics model
 //
 // No DOM, no Plotly, no side effects. Formulas implement the canonical
-// `code_expression` fields in data/model-formulas.json; the test suite pins the
-// results against the `test_cases` block of the same file.
+// `code_expression` fields in data/model-formulas.json (v0.2.0); the test
+// suite pins the results against the six canonical presets and two edge
+// cases in the `test_cases` block of the same file.
 //
-// The JSON data is statically imported so the engine stays synchronous and pure:
-// Vite inlines JSON at build time and Vitest resolves it the same way.
+// v0.2.0 data is architecture-nested: every variable and constant carries a
+// waymo_like and a cybercab definition. loadAssumptions(architectureId)
+// resolves one architecture into the flat shape the rest of the engine and
+// the UI consume.
 
 import assumptionsJson from '../data/assumptions.json';
 import scenariosJson from '../data/scenarios.json';
@@ -13,52 +16,88 @@ import formulasJson from '../data/model-formulas.json';
 import sourcesJson from '../data/sources.json';
 
 /**
- * Normalize the four data files into a single object.
+ * Normalize the four data files for one architecture.
+ *
+ * `architectureId` is required ("waymo_like" or "cybercab"). Each variable is
+ * flattened by merging its shared top-level fields (label, unit, layer,
+ * ui_group, display_unit, quick_values) with the selected architecture's
+ * nest (value, range, slider, confidence, range_basis, solver, ...).
  *
  * Returns:
- *   modelVersion, modelName, positioning, basePresetId
- *   constants        — { name: number } plain values for computation
- *   constantDefs     — full constant definitions (unit, confidence, sources, ...)
- *   variables        — full variable definitions keyed by id
- *   variableIds      — all variable ids in file order
- *   mainVariableIds  — the ui_group === "main" subset (tornado scope)
- *   baseInputs       — { variableId: base value }
- *   presets          — { id: { label, description, overrides, inputs } } with
- *                      inputs fully resolved (base values + overrides)
- *   formulas         — raw model-formulas.json (tolerances, test cases, labels)
- *   sources          — sources keyed by source id
+ *   modelVersion, modelName, positioning
+ *   architectureId    — the resolved architecture
+ *   architectures     — raw architecture metadata (labels, descriptions)
+ *   maturities        — maturity dimension ids in file order
+ *   defaultPresetId   — `${architectureId}_early_growth`
+ *   constants         — { name: number } resolved plain values
+ *   constantDefs      — resolved constant definitions
+ *   variables         — flattened variable definitions keyed by id
+ *   variableIds       — all variable ids in file order
+ *   mainVariableIds   — the ui_group === "main" subset (tornado scope)
+ *   baseInputs        — { variableId: architecture base value }
+ *   presets           — ALL six presets. Each preset's `inputs` are resolved
+ *                       against that preset's OWN architecture (base values +
+ *                       overrides), so preset baselines are correct no matter
+ *                       which architecture this call resolved. This is what
+ *                       lets URL decoding work before the right architecture
+ *                       is known.
+ *   formulas          — raw model-formulas.json (tolerances, test cases)
+ *   sources           — sources keyed by source id
  */
-export function loadAssumptions() {
+export function loadAssumptions(architectureId) {
+  if (!architectureId || !assumptionsJson.architectures[architectureId]) {
+    throw new Error(
+      `loadAssumptions: unknown architecture "${architectureId}" — expected one of ${Object.keys(
+        assumptionsJson.architectures
+      ).join(', ')}`
+    );
+  }
+
   const constants = {};
+  const constantDefs = {};
   for (const [name, def] of Object.entries(assumptionsJson.constants)) {
-    constants[name] = def.value;
+    constantDefs[name] = def[architectureId];
+    constants[name] = def[architectureId].value;
   }
 
+  const variables = {};
   const baseInputs = {};
-  for (const [name, def] of Object.entries(assumptionsJson.variables)) {
-    baseInputs[name] = def.value;
-  }
-
-  const presets = {};
-  for (const [id, preset] of Object.entries(scenariosJson.presets)) {
-    presets[id] = {
-      label: preset.label,
-      description: preset.description,
-      overrides: { ...preset.overrides },
-      inputs: { ...baseInputs, ...preset.overrides },
-    };
+  for (const [id, def] of Object.entries(assumptionsJson.variables)) {
+    const { architectures, ...shared } = def;
+    variables[id] = { ...shared, ...architectures[architectureId] };
+    baseInputs[id] = architectures[architectureId].value;
   }
 
   const variableIds = Object.keys(assumptionsJson.variables);
+
+  const presets = {};
+  for (const [id, preset] of Object.entries(scenariosJson.presets)) {
+    const inputs = {};
+    for (const [variableId, def] of Object.entries(assumptionsJson.variables)) {
+      inputs[variableId] = def.architectures[preset.architecture].value;
+    }
+    Object.assign(inputs, preset.overrides);
+    presets[id] = {
+      label: preset.label,
+      architecture: preset.architecture,
+      maturity: preset.maturity,
+      description: preset.description,
+      overrides: { ...preset.overrides },
+      inputs,
+    };
+  }
 
   return {
     modelVersion: assumptionsJson.model_version,
     modelName: assumptionsJson.model_name,
     positioning: assumptionsJson.positioning,
-    basePresetId: assumptionsJson.base_preset_id,
+    architectureId,
+    architectures: assumptionsJson.architectures,
+    maturities: assumptionsJson.maturity_dimensions,
+    defaultPresetId: `${architectureId}_early_growth`,
     constants,
-    constantDefs: assumptionsJson.constants,
-    variables: assumptionsJson.variables,
+    constantDefs,
+    variables,
     variableIds,
     mainVariableIds: variableIds.filter(
       (id) => assumptionsJson.variables[id].ui_group === 'main'
@@ -75,23 +114,31 @@ export function loadAssumptions() {
  *
  * `inputs` must contain a value for every variable id; `assumptions` is the
  * object returned by loadAssumptions(). Returns { inputs, derived, outputs,
- * sankey } where derived/outputs keys match model-formulas.json and sankey
- * holds the six flows with the edge-case clamping the data file specifies:
- * a negative city contribution clamps the revenue→contribution flow to 0 and
- * the platform shortfall flows in as "External funding" so the platform node
- * stays balanced.
+ * sankey }. v0.2.0 derives net revenue from gross fare × (1 − leakage) and
+ * depreciation from capex × (1 − residual value); platform cost per paid
+ * mile is computed once and exposed in both derived and outputs (the data
+ * file lists it in both blocks).
+ *
+ * The Sankey flows extend model-formulas.json's spec by splitting the
+ * vehicle ribbon (depreciation vs running cost) and the local-operations
+ * ribbon (fleet ops vs city launch) into separate branches, and keep the
+ * edge-case clamping: a negative city contribution clamps the
+ * revenue→contribution flow to 0 and the platform shortfall flows in as
+ * "External funding" so the platform node stays balanced.
  */
 export function computeScenario(inputs, assumptions) {
   const constants = assumptions.constants;
 
   // derived_values, in dependency order
+  const netRevenuePerPaidMile =
+    inputs.gross_fare_per_paid_mile * (1 - inputs.revenue_leakage_rate);
   const totalActiveFleet =
     inputs.active_vehicles_per_city * inputs.number_of_cities;
   const annualTotalVehicleMiles =
     totalActiveFleet * constants.annual_total_vehicle_miles_per_vehicle;
   const annualPaidMiles = annualTotalVehicleMiles * inputs.paid_mile_ratio;
   const depreciationPerTotalMile =
-    (inputs.vehicle_av_capex * (1 - constants.residual_value_rate)) /
+    (inputs.vehicle_av_capex * (1 - inputs.residual_value_pct)) /
     inputs.vehicle_lifetime_miles;
   const vehicleCostPerPaidMile =
     (depreciationPerTotalMile + inputs.direct_running_cost_per_total_mile) /
@@ -109,22 +156,53 @@ export function computeScenario(inputs, assumptions) {
   const directCostPerPaidMile =
     vehicleCostPerPaidMile + localVariableOpsPerPaidMile + cityFixedCostPerPaidMile;
   const cityContributionPerPaidMile =
-    inputs.net_revenue_per_paid_mile - directCostPerPaidMile;
+    netRevenuePerPaidMile - directCostPerPaidMile;
   const enterpriseResultPerPaidMile =
     cityContributionPerPaidMile - platformCostPerPaidMile;
   const breakEvenGapPerPaidMile = Math.max(0, -enterpriseResultPerPaidMile);
 
-  // sankey_flows
+  // Sankey flows. Two ribbons of the data file's 8-flow spec are split for
+  // the visual (8 terminal branches in total): "Vehicle and engineering"
+  // becomes depreciation + direct running cost, and the old local-operations
+  // bundle becomes local fleet ops + city launch and recurring. City launch
+  // flows from Net revenue (not City contribution) because the model counts
+  // it inside direct cost — the City contribution node keeps equaling the
+  // city_contribution_per_paid_mile output.
+  const depreciationPerPaidMile =
+    depreciationPerTotalMile / inputs.paid_mile_ratio;
+  const runningCostPerPaidMile =
+    inputs.direct_running_cost_per_total_mile / inputs.paid_mile_ratio;
+
   const flows = [
     {
+      source: 'Gross fare',
+      target: 'Revenue leakage',
+      value: inputs.gross_fare_per_paid_mile * inputs.revenue_leakage_rate,
+    },
+    {
+      source: 'Gross fare',
+      target: 'Net revenue',
+      value: netRevenuePerPaidMile,
+    },
+    {
       source: 'Net revenue',
-      target: 'Vehicle and engineering',
-      value: vehicleCostPerPaidMile,
+      target: 'Vehicle depreciation',
+      value: depreciationPerPaidMile,
+    },
+    {
+      source: 'Net revenue',
+      target: 'Direct running cost',
+      value: runningCostPerPaidMile,
     },
     {
       source: 'Net revenue',
       target: 'Local fleet operations',
-      value: localVariableOpsPerPaidMile + cityFixedCostPerPaidMile,
+      value: localVariableOpsPerPaidMile,
+    },
+    {
+      source: 'Net revenue',
+      target: 'City launch and recurring',
+      value: cityFixedCostPerPaidMile,
     },
     {
       source: 'Net revenue',
@@ -133,7 +211,7 @@ export function computeScenario(inputs, assumptions) {
     },
     {
       source: 'City contribution',
-      target: 'Platform and replication',
+      target: 'Platform cost',
       value: Math.min(
         Math.max(0, cityContributionPerPaidMile),
         platformCostPerPaidMile
@@ -141,7 +219,7 @@ export function computeScenario(inputs, assumptions) {
     },
     {
       source: 'External funding',
-      target: 'Platform and replication',
+      target: 'Platform cost',
       value: Math.max(0, -enterpriseResultPerPaidMile),
     },
     {
@@ -154,6 +232,7 @@ export function computeScenario(inputs, assumptions) {
   return {
     inputs: { ...inputs },
     derived: {
+      net_revenue_per_paid_mile: netRevenuePerPaidMile,
       total_active_fleet: totalActiveFleet,
       annual_total_vehicle_miles: annualTotalVehicleMiles,
       annual_paid_miles: annualPaidMiles,
@@ -166,6 +245,7 @@ export function computeScenario(inputs, assumptions) {
     outputs: {
       direct_cost_per_paid_mile: directCostPerPaidMile,
       city_contribution_per_paid_mile: cityContributionPerPaidMile,
+      platform_cost_per_paid_mile: platformCostPerPaidMile,
       enterprise_result_per_paid_mile: enterpriseResultPerPaidMile,
       break_even_gap_per_paid_mile: breakEvenGapPerPaidMile,
     },
@@ -176,12 +256,12 @@ export function computeScenario(inputs, assumptions) {
 /**
  * Bounded one-variable break-even solver.
  *
- * Holds every other input constant and looks for the value of `variableId`
- * inside its credible range [range.low, range.high] where
- * enterprise_result_per_paid_mile = 0, by bisection. Per the achievable_rule
- * in model-formulas.json, a solution exists only if the enterprise result is
- * zero at a boundary or changes sign across the range — the solver never
- * extrapolates beyond the credible range.
+ * Respects the per-variable solver config resolved from the selected
+ * architecture: variables with solver.enabled === false are reported as not
+ * solvable. For enabled variables, holds every other input constant and
+ * bisects for enterprise_result_per_paid_mile = 0 inside the architecture's
+ * credible range [range.low, range.high], per the achievable_rule in
+ * model-formulas.json. The solver never extrapolates beyond the range.
  *
  * Returns { achievable: boolean, value: number|null, message: string }.
  */
@@ -189,6 +269,13 @@ export function solveBreakEven(variableId, inputs, assumptions) {
   const variable = assumptions.variables[variableId];
   if (!variable) {
     throw new Error(`solveBreakEven: unknown variable "${variableId}"`);
+  }
+  if (!variable.solver || variable.solver.enabled === false) {
+    return {
+      achievable: false,
+      value: null,
+      message: 'Break-even solving is not enabled for this variable.',
+    };
   }
 
   const spec = assumptions.formulas.primary_outputs.break_even_solutions;
@@ -258,10 +345,10 @@ export function solveBreakEven(variableId, inputs, assumptions) {
 
 /**
  * One-at-a-time sensitivity per tornado_methodology in model-formulas.json:
- * for each of the seven main variables, set it to range.low / range.high while
- * holding all other inputs at their current values, and report the change in
- * enterprise_result_per_paid_mile against the baseline. Sorted descending by
- * max(|impactLow|, |impactHigh|).
+ * for each of the nine main variables, set it to the selected architecture's
+ * range.low / range.high while holding all other inputs at their current
+ * values, and report the change in enterprise_result_per_paid_mile against
+ * the baseline. Sorted descending by max(|impactLow|, |impactHigh|).
  */
 export function computeTornado(inputs, assumptions) {
   const baseline = computeScenario(inputs, assumptions).outputs

@@ -1,89 +1,149 @@
 {
-  "model_version": "0.1.0",
+  "model_version": "0.2.3",
   "sources": {
     "src_model_base_v1": {
       "citation": "Robotaxi Transparent Base-Case Model v1",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "internal_model",
-      "note": "Transparent scenario model derived from the consolidated research. Not a claimed Waymo P&L."
+      "confidence": "scenario",
+      "note": "Transparent scenario model. Not a claimed Waymo or Tesla P&L."
     },
     "src_cost_architecture": {
-      "citation": "Consolidated Robotaxi Cost Architecture Research Output v1",
+      "citation": "Robotaxi Scalability High-Confidence Consolidated Research v1",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "consolidated_research",
-      "note": "Supports the three-layer taxonomy and double-counting controls."
+      "confidence": "high_on_mechanism",
+      "note": "Supports the three-layer taxonomy, four scalability mechanisms and double-counting controls."
     },
-    "src_depreciation": {
+    "src_depreciation_residual": {
       "citation": "Consolidated Robotaxi Depreciation and Residual Value Research v1",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "consolidated_research",
-      "note": "Supports capex, useful-life and residual-value scenario treatment."
+      "confidence": "low_on_residual_value",
+      "note": "Supports scenario treatment of lifetime and residual value. No mature secondary market for purpose-built robotaxis is established."
     },
     "src_utilisation": {
       "citation": "Sprint 2 Consolidation: Utilisation, Empty Miles and Paid-Mile Ratio",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "consolidated_research",
-      "note": "Supports the 0.55 base paid-mile ratio and 45% to 65% scenario range."
+      "confidence": "medium_high",
+      "note": "Supports the 0.55 Waymo-like base paid-mile ratio and scenario ranges."
     },
     "src_energy_depot": {
       "citation": "Sprint 3 Consolidation: Energy, Charging, Depot and Infrastructure",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "consolidated_research",
+      "confidence": "mixed",
       "note": "Supports direct running-cost and physical-enablement ranges."
     },
     "src_ops_labour": {
       "citation": "Sprint 4 and Post-Driver Labour Consolidations",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "consolidated_research",
-      "note": "Supports the existence and scenario treatment of local fleet operations."
+      "confidence": "high_on_functions_low_on_cost",
+      "note": "Supports local fleet-operations categories; exact staffing and cost remain scenario-based."
     },
-    "src_scalability": {
-      "citation": "Robotaxi Scalability High-Confidence Consolidated Research v1",
+    "src_tesla_consensus": {
+      "citation": "Tesla Robotaxi and Cybercab Research Consensus v1",
       "url": null,
-      "accessed": "2026-06-11",
+      "accessed": "2026-06-12",
       "type": "consolidated_research",
-      "note": "Supports the four scalability mechanisms and Layer 3 decomposition."
+      "confidence": "mixed",
+      "note": "High confidence in architectural differences, medium in direction of savings, low in realised economics."
     },
-    "src_waymo_scaling": {
-      "citation": "Waymo, New Insights for Scaling Laws in Autonomous Driving, 13 June 2025",
-      "url": "https://waymo.com/blog/2025/06/scaling-laws-in-autonomous-driving/",
-      "accessed": "2026-06-11",
-      "type": "primary_technical",
-      "note": "Supports ongoing training-data and compute productivity, not a dollar platform-cost estimate."
-    },
-    "src_waymo_world_model": {
-      "citation": "Waymo, The Waymo World Model: A New Frontier for Autonomous Driving Simulation, 6 February 2026",
-      "url": "https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation/",
-      "accessed": "2026-06-11",
-      "type": "primary_technical",
-      "note": "Supports simulation as a continuing production activity."
-    },
-    "src_waymo_driver6": {
-      "citation": "Waymo, Meet the 6th-generation Waymo Driver, August 2024",
-      "url": "https://waymo.com/blog/2024/08/meet-the-6th-generation-waymo-driver/",
-      "accessed": "2026-06-11",
+    "src_uber_service_fee": {
+      "citation": "Uber, Uber's Service Fee, Explained",
+      "url": "https://www.uber.com/us/en/drive/driver-app/service-fee/",
+      "accessed": "2026-06-12",
       "type": "primary_company",
-      "note": "Supports sensor rationalisation and cost-down direction, but not an all-in vehicle-cost figure."
+      "confidence": "high",
+      "note": "Uber states the service fee varies by trip and is the residual after driver earnings, third-party fees and operational expenses."
     },
-    "src_afdc_ev_maintenance": {
-      "citation": "US Department of Energy, Alternative Fuels Data Center, Maintenance and Safety of Electric Vehicles",
-      "url": "https://afdc.energy.gov/vehicles/electric-maintenance",
-      "accessed": "2026-06-11",
-      "type": "public_authority",
-      "note": "EV maintenance benchmark, not robotaxi-specific."
+    "src_lyft_fee_cap": {
+      "citation": "Lyft, The Lyft fee is capped every month",
+      "url": "https://www.lyft.com/blog/posts/an-update-for-drivers-now-the-lyft-fee-is-capped-every-month",
+      "accessed": "2026-06-12",
+      "type": "primary_company",
+      "confidence": "high",
+      "note": "Lyft states its fee averages approximately 14% and is capped at 30% of passenger payments monthly; external fees are separate."
     },
-    "src_waymo_swissre": {
-      "citation": "Waymo and Swiss Re claims-frequency research",
-      "url": "https://arxiv.org/abs/2403.14648",
-      "accessed": "2026-06-11",
-      "type": "actuarial_academic",
-      "note": "Supports lower claim frequency, not a proportional insurance-premium reduction."
+    "src_lyft_earnings": {
+      "citation": "Lyft, The driver's guide to pay",
+      "url": "https://www.lyft.com/driver/earnings",
+      "accessed": "2026-06-12",
+      "type": "primary_company",
+      "confidence": "high",
+      "note": "Lyft describes a 30% platform-fee cap before external fees."
+    },
+    "src_tesla_robotaxi_support": {
+      "citation": "Tesla Support, Robotaxi",
+      "url": "https://www.tesla.com/support/robotaxi",
+      "accessed": "2026-06-12",
+      "type": "primary_product_support",
+      "confidence": "high",
+      "note": "Confirms current service areas, operating hours, Model Y fleet and direct Tesla app."
+    },
+    "src_tesla_q1_2026": {
+      "citation": "Tesla Q1 2026 Update, 22 April 2026",
+      "url": "https://ir.tesla.com/_flysystem/s3/sec/000162828026026551/tsla-20260422-gen.pdf",
+      "accessed": "2026-06-12",
+      "type": "primary_company_filing",
+      "confidence": "high",
+      "note": "States expected volume production of Cybercab in 2026. Does not disclose realised unit cost."
+    },
+    "src_tesla_maps_job": {
+      "citation": "Tesla Careers, Machine Learning Engineer, Maps & Navigation, Robotaxi",
+      "url": "https://www.tesla.com/careers/search/job/machine-learning-engineer-maps-navigation-robotaxi-261137",
+      "accessed": "2026-06-12",
+      "type": "primary_company_job_posting",
+      "confidence": "high",
+      "note": "Confirms Tesla develops accurate road-network maps for Robotaxi and vehicle navigation; Tesla is map-light, not map-free."
+    },
+    "src_tesla_cybercab_claims": {
+      "citation": "Tesla We, Robot Cybercab claims, October 2024",
+      "url": "https://www.tesla.com/robotaxi",
+      "accessed": "2026-06-12",
+      "type": "primary_company_claim",
+      "confidence": "low",
+      "note": "Used only to document future Cybercab claims. The sub-$30,000 vehicle and low operating-cost figures are targets, not realised economics."
+    },
+    "src_waymo_current_service_2026": {
+      "citation": "Waymo, Rides: Serving Riders In, accessed June 2026",
+      "url": "https://waymo.com/rides/",
+      "accessed": "2026-06-12",
+      "type": "primary_company",
+      "confidence": "high",
+      "note": "Waymo lists 11 current rider-service markets: Atlanta, Austin, Dallas, Houston, Los Angeles, Miami, Nashville, Orlando, Phoenix, San Antonio and the San Francisco Bay Area."
+    },
+    "src_waymo_nhtsa_3791": {
+      "citation": "NHTSA Recall Campaign 26E026, Waymo 5th and 6th Generation ADS, May 2026",
+      "url": "https://static.nhtsa.gov/odi/rcl/2026/RCAK-26E026-9973.pdf",
+      "accessed": "2026-06-12",
+      "type": "primary_regulatory",
+      "confidence": "high",
+      "note": "Potential number of affected ADS units is 3,791. This is an installed affected-unit count, not a confirmed active commercial fleet count."
+    },
+    "src_waymo_weekly_miles_2026": {
+      "citation": "Waymo, March 2026 safety update",
+      "url": "https://waymo.com/blog/",
+      "accessed": "2026-06-12",
+      "type": "primary_company",
+      "confidence": "medium-high",
+      "note": "Waymo states it is driving over 4 million miles weekly. Used only to triangulate an active-fleet-equivalent range under the model's 70,000-mile annual assumption."
+    },
+    "src_waymo_expansion_2026": {
+      "citation": "Waymo, 2025 Year in Review and 2026 city expansion plans",
+      "url": "https://waymo.com/blog/2025/12/2025-year-in-review/",
+      "accessed": "2026-06-12",
+      "type": "primary_company",
+      "confidence": "high",
+      "note": "Waymo said it was laying groundwork for ride-hailing operations in over 20 additional cities during 2026. A 25-city high scenario is therefore conservative rather than aggressive."
     }
   }
 }

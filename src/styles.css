@@ -1,0 +1,707 @@
+/* styles.css — analytical, system-font, restrained-palette styling */
+
+:root {
+  --accent: #1f4e8c;
+  --text: #1c2430;
+  --muted: #5b6573;
+  --border: #dde3ea;
+  --bg: #f7f9fb;
+  --surface: #ffffff;
+  --danger: #b42318;
+  --good: #156e42;
+  --badge-high-bg: #e0f2e9;
+  --badge-high-fg: #156e42;
+  --badge-medium-bg: #e3edfa;
+  --badge-medium-fg: #1f4e8c;
+  --badge-low-bg: #fbf0d3;
+  --badge-low-fg: #8a6100;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* v0.2.0: wide enough for the 3-column slider grid */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px 56px;
+}
+
+/* ---- version banner ---- */
+
+.version-banner {
+  background: var(--badge-low-bg);
+  color: var(--badge-low-fg);
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+}
+
+/* ---- header ---- */
+
+.site-header {
+  padding: 22px 0 0;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+  max-width: 620px;
+}
+
+.methodology-link {
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.methodology-link:hover,
+.methodology a:hover {
+  text-decoration: underline;
+}
+
+/* ---- scenario controls ---- */
+
+/* demoted utilities, right-aligned above the scenario row */
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+/* maturity buttons left, architecture toggle right */
+.scenario-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 4px;
+}
+
+.preset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* quiet segmented architecture toggle */
+.arch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arch-toggle-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.arch-segments {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.arch-button {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.arch-button + .arch-button {
+  border-left: 1px solid var(--border);
+}
+
+.arch-button:hover {
+  color: var(--text);
+}
+
+.arch-button.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.preset-button,
+.reset-button,
+.share-button {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.preset-button:hover,
+.share-button:hover {
+  border-color: var(--accent);
+}
+
+.preset-button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* deliberately demoted next to Copy link */
+.reset-button {
+  background: #e9edf1;
+  border-color: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 8px 12px;
+}
+
+.reset-button:hover {
+  border-color: #c9d2db;
+}
+
+.share-button {
+  color: var(--accent);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- sections ---- */
+
+section {
+  margin: 28px 0;
+}
+
+/* slider grid sits close under the scenario controls */
+.section-controls {
+  margin-top: 14px;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 0 0 10px;
+}
+
+.section-note {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0 0 12px;
+  max-width: 620px;
+}
+
+/* ---- sliders ---- */
+
+/* desktop: 3-column grid (9 main = 3×3, 3 advanced = 1×3); compact cells
+   with label+badge left, value right, full-width track below */
+.sliders {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 24px;
+}
+
+.slider-row {
+  padding: 0;
+  min-width: 0;
+}
+
+.slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.slider-label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.slider-value {
+  font-size: 0.9rem;
+}
+
+/* full labels are for the mobile single-column list; the grid uses the
+   shortened set (see the mobile media query for the swap) */
+.label-full {
+  display: none;
+}
+
+.slider-value {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+details.advanced .sliders {
+  margin-top: 10px;
+}
+
+/* system slider styling on purpose — accent-color only, thin default track */
+input[type='range'] {
+  width: 100%;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.badge-high {
+  background: var(--badge-high-bg);
+  color: var(--badge-high-fg);
+}
+
+.badge-medium {
+  background: var(--badge-medium-bg);
+  color: var(--badge-medium-fg);
+}
+
+.badge-low {
+  background: var(--badge-low-bg);
+  color: var(--badge-low-fg);
+}
+
+/* deeper amber/orange, one shade darker than Low */
+.badge-very-low {
+  background: #f6dbc2;
+  color: #93420a;
+}
+
+/* replaces the confidence badge while a slider differs from the preset */
+.badge-adjusted {
+  background: #e4e7ec;
+  color: #4a5360;
+}
+
+.badge-short {
+  display: none;
+}
+
+details.advanced {
+  margin-top: 14px;
+}
+
+details.advanced summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+/* derived fleet size above the output cards */
+.fleet-line {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* ---- output cards (compact: ~60px tall, 4x1 desktop / 2x2 mobile) ---- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+
+.card-label {
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-value {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 1px 0 0;
+}
+
+.negative {
+  color: var(--danger);
+}
+
+/* ---- chart placeholders ---- */
+
+.chart-placeholder {
+  background: var(--surface);
+  border: 1px dashed #c3ccd6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chart-sankey {
+  min-height: 320px;
+}
+
+/* keep Plotly's sankey SVG (and any label overhang) inside the container */
+#sankey-chart {
+  overflow: hidden;
+}
+
+#sankey-chart .main-svg {
+  max-width: 100%;
+}
+
+.chart-tornado {
+  min-height: 280px;
+}
+
+/* once Plotly takes over, the dashed placeholder frame is removed via JS;
+   numbers inside the SVG charts keep tabular figures */
+#sankey-chart text,
+#tornado-chart text {
+  font-variant-numeric: tabular-nums;
+}
+
+/* tornado chart + confidence badge column. The column's vertical padding
+   mirrors TORNADO_MARGIN (t: 8, b: 44) in tornado.js so each badge row
+   centers on its bar. */
+.tornado-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.tornado-wrap .chart-tornado {
+  flex: 1;
+  min-width: 0;
+}
+
+.tornado-badges {
+  display: flex;
+  flex-direction: column;
+  width: 48px;
+  padding: 8px 0 44px;
+}
+
+.tornado-badge-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* mobile-only sticky live readout (see the mobile media query) */
+.readout-strip {
+  display: none;
+}
+
+/* ---- break-even list ---- */
+
+.breakeven-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breakeven-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.breakeven-item:last-child {
+  border-bottom: none;
+}
+
+.breakeven-status {
+  font-weight: 600;
+  text-align: right;
+}
+
+.breakeven-item.not-achievable .breakeven-status {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.breakeven-item.satisfied .breakeven-status {
+  color: var(--good);
+  font-weight: 500;
+}
+
+/* ---- methodology footer ---- */
+
+.methodology {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
+  max-width: 680px;
+}
+
+.methodology a {
+  color: var(--accent);
+}
+
+/* ---- toast ---- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 8px);
+  background: var(--text);
+  color: #fff;
+  font-size: 0.875rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 100;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---- mobile ---- */
+
+@media (max-width: 719.98px) {
+  .container {
+    padding: 0 16px 40px;
+  }
+
+  .site-header {
+    padding-top: 24px;
+  }
+
+  .site-header h1 {
+    font-size: 1.35rem;
+  }
+
+  /* architecture toggle stacks above the maturity buttons, both full-width */
+  .scenario-row {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .arch-toggle {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .arch-segments {
+    display: flex;
+  }
+
+  .arch-segments .arch-button {
+    flex: 1;
+    padding: 8px 10px;
+  }
+
+  /* all presets stay visible: 2-column grid for 3-4, full-width for 2 */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .preset-grid > .preset-button:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .preset-grid:has(> .preset-button:nth-child(2):last-child) {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-row > * {
+    flex: 1;
+  }
+
+  .share-button {
+    justify-content: center;
+  }
+
+  /* live readout strip: sticky at the top of the viewport while the
+     controls section (its containing block) is in view, releases after */
+  .readout-strip {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    margin: 0 -16px 4px;
+    padding: 6px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .readout-item {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .readout-label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .readout-value {
+    font-size: 24px;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  /* single column, normal flow: sliders → sankey → cards → break-even;
+     no sticky charts */
+  #explorer-main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #explorer-main section {
+    margin: 14px 0;
+  }
+
+  .section-controls {
+    order: 1;
+  }
+
+  .section-sankey {
+    order: 2;
+  }
+
+  .section-outputs {
+    order: 3;
+  }
+
+  .section-breakeven {
+    order: 4;
+  }
+
+  /* cards keep their grid but are demoted — the strip carries the two
+     headline numbers */
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* single-column slider list with full labels and row separators */
+  .sliders {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .slider-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .slider-row:last-child {
+    border-bottom: none;
+  }
+
+  .slider-label,
+  .slider-value {
+    font-size: 1rem;
+  }
+
+  .label-full {
+    display: inline;
+  }
+
+  .label-short {
+    display: none;
+  }
+
+  .badge-long {
+    display: none;
+  }
+
+  .badge-short {
+    display: inline;
+  }
+
+  .chart-sankey {
+    min-height: 200px;
+    font-size: 0.75rem;
+  }
+
+  .chart-tornado {
+    min-height: 240px;
+    font-size: 0.75rem;
+  }
+
+  .tornado-badges {
+    width: 26px;
+  }
+}

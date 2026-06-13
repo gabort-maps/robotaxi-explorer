@@ -1,20 +1,35 @@
 {
-  "model_version": "0.1.0",
+  "model_version": "0.2.3",
   "base_assumptions": "assumptions.json",
+  "architectures": [
+    "waymo_like",
+    "cybercab"
+  ],
+  "maturities": [
+    "early_growth",
+    "mature_dense",
+    "replicated_multicity"
+  ],
   "presets": {
-    "early_growth": {
-      "label": "Early growth network",
-      "description": "Current-generation vehicle economics, moderate utilisation, limited local density and a high platform burden.",
+    "waymo_like_early_growth": {
+      "label": "Waymo-like · Early growth",
+      "architecture": "waymo_like",
+      "maturity": "early_growth",
+      "description": "Current-generation cost structure across Waymo's 11 serving markets, using an evidence-triangulated active-fleet-equivalent density.",
       "overrides": {}
     },
-    "mature_dense": {
-      "label": "Mature dense-city network",
-      "description": "Higher paid-mile utilisation, stronger local density and improved vehicle and operating productivity, with a still-significant central platform.",
+    "waymo_like_mature_dense": {
+      "label": "Waymo-like · Mature dense city",
+      "architecture": "waymo_like",
+      "maturity": "mature_dense",
+      "description": "Higher local density, better utilisation and improved vehicle and operating productivity.",
       "overrides": {
-        "net_revenue_per_paid_mile": 3.4,
+        "gross_fare_per_paid_mile": 3.8,
+        "revenue_leakage_rate": 0.1,
         "paid_mile_ratio": 0.62,
         "vehicle_av_capex": 140000,
         "vehicle_lifetime_miles": 300000,
+        "residual_value_pct": 0.15,
         "direct_running_cost_per_total_mile": 0.28,
         "local_fleet_ops_cost_per_total_mile": 0.15,
         "active_vehicles_per_city": 1000,
@@ -22,20 +37,71 @@
         "annual_city_cost_per_city": 5000000
       }
     },
-    "replicated_multicity": {
-      "label": "Replicated multi-city platform",
-      "description": "A larger network in which vehicle, local operations and launch playbooks have improved and central platform cost is absorbed across more paid miles.",
+    "waymo_like_replicated_multicity": {
+      "label": "Waymo-like · Replicated multi-city",
+      "architecture": "waymo_like",
+      "maturity": "replicated_multicity",
+      "description": "A 25-city network with lower vehicle cost, high utilisation and increasingly repeatable city launches.",
       "overrides": {
-        "net_revenue_per_paid_mile": 3.2,
+        "gross_fare_per_paid_mile": 3.5,
+        "revenue_leakage_rate": 0.1,
         "paid_mile_ratio": 0.63,
         "vehicle_av_capex": 120000,
         "vehicle_lifetime_miles": 350000,
+        "residual_value_pct": 0.2,
         "direct_running_cost_per_total_mile": 0.25,
         "local_fleet_ops_cost_per_total_mile": 0.13,
         "active_vehicles_per_city": 1000,
-        "number_of_cities": 15,
+        "number_of_cities": 25,
         "annual_platform_cost": 240000000,
         "annual_city_cost_per_city": 4000000
+      }
+    },
+    "cybercab_early_growth": {
+      "label": "Cybercab · Early growth",
+      "architecture": "cybercab",
+      "maturity": "early_growth",
+      "description": "Evidence-weighted Cybercab architecture with lower vehicle cost but limited density and high central uncertainty.",
+      "overrides": {}
+    },
+    "cybercab_mature_dense": {
+      "label": "Cybercab · Mature dense city",
+      "architecture": "cybercab",
+      "maturity": "mature_dense",
+      "description": "A denser Cybercab network with improved utilisation, lower manufacturing cost and better local productivity.",
+      "overrides": {
+        "gross_fare_per_paid_mile": 2.75,
+        "revenue_leakage_rate": 0.0,
+        "paid_mile_ratio": 0.62,
+        "vehicle_av_capex": 45000,
+        "vehicle_lifetime_miles": 300000,
+        "residual_value_pct": 0.1,
+        "direct_running_cost_per_total_mile": 0.2,
+        "local_fleet_ops_cost_per_total_mile": 0.15,
+        "active_vehicles_per_city": 1000,
+        "number_of_cities": 6,
+        "annual_platform_cost": 275000000,
+        "annual_city_cost_per_city": 4000000
+      }
+    },
+    "cybercab_replicated_multicity": {
+      "label": "Cybercab · Replicated multi-city",
+      "architecture": "cybercab",
+      "maturity": "replicated_multicity",
+      "description": "Claims-realised vehicle economics combined with mature utilisation and broad platform absorption.",
+      "overrides": {
+        "gross_fare_per_paid_mile": 2.5,
+        "revenue_leakage_rate": 0.05,
+        "paid_mile_ratio": 0.65,
+        "vehicle_av_capex": 35000,
+        "vehicle_lifetime_miles": 350000,
+        "residual_value_pct": 0.1,
+        "direct_running_cost_per_total_mile": 0.18,
+        "local_fleet_ops_cost_per_total_mile": 0.13,
+        "active_vehicles_per_city": 1000,
+        "number_of_cities": 15,
+        "annual_platform_cost": 300000000,
+        "annual_city_cost_per_city": 3000000
       }
     }
   }
