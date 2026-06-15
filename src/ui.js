@@ -14,8 +14,17 @@ const BADGE_TEXT = {
 // Compact labels for the segmented architecture toggle; tooltips keep the
 // data file's full descriptions.
 const ARCH_LABEL_OVERRIDES = {
-  waymo_like: 'Waymo-like',
-  cybercab: 'Cybercab claim-based',
+  waymo_current: 'Waymo current',
+  waymo_nextgen: 'Waymo next-gen',
+  cybercab: 'Cybercab',
+};
+
+// Human-readable evidence quality labels shown below the preset buttons.
+const EVIDENCE_QUALITY_TEXT = {
+  observed_proxy: 'Observed proxy',
+  stress_legacy: 'Stress legacy case',
+  forward_looking: 'Forward-looking scenario',
+  claims_realised: 'Claims-realised scenario',
 };
 
 // Shortened labels for the desktop 3-column slider grid; the mobile
@@ -30,8 +39,11 @@ const SHORT_LABELS = {
   local_fleet_ops_cost_per_total_mile: 'Fleet ops cost',
   active_vehicles_per_city: 'Vehicles per city',
   number_of_cities: 'Active cities',
-  annual_platform_cost: 'Platform cost / yr',
-  annual_city_cost_per_city: 'City launch / yr',
+  annual_platform_fixed_cost: 'Fixed platform cost',
+  platform_cost_per_vehicle_year: 'Per-vehicle platform',
+  city_launch_cost: 'City launch cost',
+  recurring_city_overhead: 'City overhead / yr',
+  amortisation_period_years: 'Amortisation period',
 };
 
 // All four are USD per paid mile; the label and number carry the card alone.
@@ -149,12 +161,18 @@ export function formatVariableValue(variableId, value, assumptions) {
       return `${compactUsd(value)} /yr`;
     case 'USD per city-year':
       return `${compactUsd(value)} /city-yr`;
+    case 'USD per vehicle-year':
+      return `${compactUsd(value)} /veh-yr`;
+    case 'USD per city launch':
+      return compactUsd(value);
     case 'total vehicle miles':
       return `${intFmt.format(value)} mi`;
     case 'vehicles per city':
       return `${intFmt.format(value)} vehicles`;
     case 'cities':
       return `${trimmed(value, 1)} cities`;
+    case 'years':
+      return `${trimmed(value, 0)} ${value === 1 ? 'year' : 'years'}`;
     default:
       return `${trimmed(value, 2)} ${def.unit}`;
   }
@@ -303,12 +321,16 @@ export function buildUI(root, assumptions, handlers) {
     refs.maturityButtons.set(maturity, button);
     presetGrid.append(button);
   }
+
+  // evidence quality caption sits below the preset buttons
+  refs.evidenceLabel = el('p', { class: 'evidence-label' }, '');
+
   refs.resetButton = el(
     'button',
     {
       class: 'reset-button',
       type: 'button',
-      title: 'Restore the active preset’s baseline values',
+      title: 'Restore baseline for this scenario.',
     },
     'Reset'
   );
@@ -326,12 +348,16 @@ export function buildUI(root, assumptions, handlers) {
     refs.resetButton,
     refs.shareButton
   );
-  // single scenario row: maturity buttons left, architecture toggle right;
+
+  // preset block: maturity buttons + evidence quality label stacked vertically
+  const presetBlock = el('div', { class: 'preset-block' }, presetGrid, refs.evidenceLabel);
+
+  // single scenario row: preset block left, architecture toggle right;
   // mobile reverses to stack the toggle above the maturity buttons
   const scenarioRow = el(
     'div',
     { class: 'scenario-row' },
-    presetGrid,
+    presetBlock,
     archToggle
   );
 
@@ -468,7 +494,8 @@ export function buildUI(root, assumptions, handlers) {
       {},
       'Every assumption carries an evidence-based low–high range. In the sensitivity (tornado) view, a wider bar means the evidence is genuinely more uncertain: range widths reflect the strength of the available evidence, not a modelling choice, and they are deliberately not normalised to make variables look equally important.'
     ),
-    el('p', {}, 'All assumptions, ranges, sources and formulas live in the project’s ', githubLink, '.')
+    el('p', {}, 'To approximate a mixed Waymo fleet, run the current-gen and next-gen scenarios separately under the same network assumptions, then weight the outputs by the share of paid miles produced by each generation.'),
+    el('p', {}, "All assumptions, ranges, sources and formulas live in the project's ", githubLink, '.')
   );
 
   refs.toast = el('div', { class: 'toast', role: 'status', 'aria-live': 'polite' });
@@ -510,6 +537,17 @@ export function setActiveMaturity(refs, maturity) {
   for (const [id, button] of refs.maturityButtons) {
     button.classList.toggle('active', id === maturity);
   }
+}
+
+/**
+ * Update the evidence quality caption below the preset buttons.
+ * Called whenever the active preset changes (architecture or maturity switch).
+ */
+export function updateEvidenceQuality(refs, presetId, assumptions) {
+  const preset = assumptions.presets[presetId];
+  if (!preset) return;
+  refs.evidenceLabel.textContent =
+    EVIDENCE_QUALITY_TEXT[preset.evidence_quality] ?? preset.evidence_quality ?? '';
 }
 
 /**

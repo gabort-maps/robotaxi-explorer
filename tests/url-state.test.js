@@ -8,9 +8,9 @@ import {
   buildShareableUrl,
 } from '../src/url-state.js';
 
-const assumptions = loadAssumptions('waymo_like');
+const assumptions = loadAssumptions('waymo_current');
 const VERSION = assumptions.modelVersion;
-const DEFAULT_PRESET = Object.keys(assumptions.presets)[0];
+const DEFAULT_PRESET = Object.keys(assumptions.presets)[0]; // waymo_current_early_growth
 
 let warnSpy;
 beforeEach(() => {
@@ -24,16 +24,16 @@ describe('url-state', () => {
   describe('round-trip', () => {
     it('encode then decode returns the same inputs', () => {
       const inputs = {
-        ...assumptions.presets.waymo_like_mature_dense.inputs,
+        ...assumptions.presets.waymo_current_mature_dense.inputs,
         gross_fare_per_paid_mile: 4.25,
         paid_mile_ratio: 0.58,
         number_of_cities: 10,
       };
-      const hash = encodeState('waymo_like_mature_dense', inputs, assumptions, VERSION);
+      const hash = encodeState('waymo_current_mature_dense', inputs, assumptions, VERSION);
       const decoded = decodeState(hash, assumptions);
 
-      expect(decoded.presetId).toBe('waymo_like_mature_dense');
-      expect(decoded.architectureId).toBe('waymo_like');
+      expect(decoded.presetId).toBe('waymo_current_mature_dense');
+      expect(decoded.architectureId).toBe('waymo_current');
       expect(decoded.modelVersion).toBe(VERSION);
       expect(decoded.versionMismatch).toBe(false);
       expect(decoded.inputs).toEqual(inputs);
@@ -52,24 +52,38 @@ describe('url-state', () => {
       expect(decoded.architectureId).toBe('cybercab');
       expect(decoded.inputs).toEqual(inputs);
     });
+
+    it('round-trips a waymo_nextgen preset with the right architecture', () => {
+      const inputs = {
+        ...assumptions.presets.waymo_nextgen_early_growth.inputs,
+        vehicle_av_capex: 90000,
+      };
+      const hash = encodeState('waymo_nextgen_early_growth', inputs, assumptions, VERSION);
+      expect(hash).toContain('arch=waymo_nextgen');
+
+      const decoded = decodeState(hash, assumptions);
+      expect(decoded.presetId).toBe('waymo_nextgen_early_growth');
+      expect(decoded.architectureId).toBe('waymo_nextgen');
+      expect(decoded.inputs).toEqual(inputs);
+    });
   });
 
   describe('delta encoding', () => {
     it('omits values identical to the preset baseline', () => {
-      const inputs = { ...assumptions.presets.waymo_like_early_growth.inputs };
-      const hash = encodeState('waymo_like_early_growth', inputs, assumptions, VERSION);
+      const inputs = { ...assumptions.presets.waymo_current_early_growth.inputs };
+      const hash = encodeState('waymo_current_early_growth', inputs, assumptions, VERSION);
 
       expect(hash).toBe(
-        `#preset=waymo_like_early_growth&v=${VERSION}&arch=waymo_like`
+        `#preset=waymo_current_early_growth&v=${VERSION}&arch=waymo_current`
       );
     });
 
     it('encodes only the variables that changed', () => {
       const inputs = {
-        ...assumptions.presets.waymo_like_early_growth.inputs,
+        ...assumptions.presets.waymo_current_early_growth.inputs,
         vehicle_av_capex: 150000,
       };
-      const hash = encodeState('waymo_like_early_growth', inputs, assumptions, VERSION);
+      const hash = encodeState('waymo_current_early_growth', inputs, assumptions, VERSION);
 
       expect(hash).toContain('vehicle_av_capex=150000');
       for (const id of assumptions.variableIds) {
@@ -81,22 +95,22 @@ describe('url-state', () => {
 
     it('treats a value rounded back to the baseline as unchanged', () => {
       const inputs = {
-        ...assumptions.presets.waymo_like_early_growth.inputs,
+        ...assumptions.presets.waymo_current_early_growth.inputs,
         // 4-significant-figure rounding collapses this onto the 175000 baseline
         vehicle_av_capex: 175000.001,
       };
-      const hash = encodeState('waymo_like_early_growth', inputs, assumptions, VERSION);
+      const hash = encodeState('waymo_current_early_growth', inputs, assumptions, VERSION);
 
       expect(hash).toBe(
-        `#preset=waymo_like_early_growth&v=${VERSION}&arch=waymo_like`
+        `#preset=waymo_current_early_growth&v=${VERSION}&arch=waymo_current`
       );
     });
   });
 
   describe('version mismatch', () => {
     it('flags a URL encoded with a different model version', () => {
-      const inputs = { ...assumptions.presets.waymo_like_early_growth.inputs };
-      const hash = encodeState('waymo_like_early_growth', inputs, assumptions, '9.9.9');
+      const inputs = { ...assumptions.presets.waymo_current_early_growth.inputs };
+      const hash = encodeState('waymo_current_early_growth', inputs, assumptions, '9.9.9');
       const decoded = decodeState(hash, assumptions);
 
       expect(decoded.versionMismatch).toBe(true);
@@ -104,8 +118,8 @@ describe('url-state', () => {
     });
 
     it('does not flag a URL with the current model version', () => {
-      const inputs = { ...assumptions.presets.waymo_like_early_growth.inputs };
-      const hash = encodeState('waymo_like_early_growth', inputs, assumptions, VERSION);
+      const inputs = { ...assumptions.presets.waymo_current_early_growth.inputs };
+      const hash = encodeState('waymo_current_early_growth', inputs, assumptions, VERSION);
 
       expect(decodeState(hash, assumptions).versionMismatch).toBe(false);
     });
@@ -113,22 +127,23 @@ describe('url-state', () => {
 
   describe('v0.1.0 migration', () => {
     it.each([
-      ['early_growth', 'waymo_like_early_growth'],
-      ['mature_dense', 'waymo_like_mature_dense'],
-      ['replicated_multicity', 'waymo_like_replicated_multicity'],
-    ])('maps old preset "%s" to "%s" with versionMismatch', (oldId, newId) => {
+      ['early_growth', 'waymo_current_early_growth'],
+      ['mature_dense', 'waymo_current_mature_dense'],
+      ['replicated_multicity', 'waymo_current_replicated_multicity'],
+    ])('maps old preset "%s" to "%s" via two-step chain', (oldId, newId) => {
       const decoded = decodeState(`#preset=${oldId}&v=0.1.0`, assumptions);
 
       expect(decoded.presetId).toBe(newId);
-      expect(decoded.architectureId).toBe('waymo_like');
+      expect(decoded.architectureId).toBe('waymo_current');
       expect(decoded.versionMismatch).toBe(true);
       expect(decoded.inputs).toEqual(assumptions.presets[newId].inputs);
-      expect(warnSpy).toHaveBeenCalled();
+      // two console.warn calls: one for v0.1.0 → waymo_like_*, one for v0.2.3 → waymo_current_*
+      expect(warnSpy).toHaveBeenCalledTimes(2);
     });
 
     it('flags migrated presets even if the URL claims the current version', () => {
       const decoded = decodeState(`#preset=mature_dense&v=${VERSION}`, assumptions);
-      expect(decoded.presetId).toBe('waymo_like_mature_dense');
+      expect(decoded.presetId).toBe('waymo_current_mature_dense');
       expect(decoded.versionMismatch).toBe(true);
     });
 
@@ -138,30 +153,52 @@ describe('url-state', () => {
         assumptions
       );
 
-      expect(decoded.presetId).toBe('waymo_like_mature_dense');
+      expect(decoded.presetId).toBe('waymo_current_mature_dense');
       expect(decoded.inputs.paid_mile_ratio).toBe(0.6);
       expect(decoded.inputs).not.toHaveProperty('net_revenue_per_paid_mile');
       expect(decoded.versionMismatch).toBe(true);
     });
   });
 
+  describe('v0.2.3 migration', () => {
+    it.each([
+      ['waymo_like_early_growth', 'waymo_current_early_growth'],
+      ['waymo_like_mature_dense', 'waymo_current_mature_dense'],
+      ['waymo_like_replicated_multicity', 'waymo_current_replicated_multicity'],
+    ])('maps v0.2.3 preset "%s" to "%s" with versionMismatch', (oldId, newId) => {
+      const decoded = decodeState(`#preset=${oldId}&v=0.2.3`, assumptions);
+
+      expect(decoded.presetId).toBe(newId);
+      expect(decoded.architectureId).toBe('waymo_current');
+      expect(decoded.versionMismatch).toBe(true);
+      expect(decoded.inputs).toEqual(assumptions.presets[newId].inputs);
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it('also migrates v0.2.3 IDs that claim the current version', () => {
+      const decoded = decodeState(`#preset=waymo_like_early_growth&v=${VERSION}`, assumptions);
+      expect(decoded.presetId).toBe('waymo_current_early_growth');
+      expect(decoded.versionMismatch).toBe(true);
+    });
+  });
+
   describe('unknown variable ids', () => {
     it('ignores variables not present in current assumptions', () => {
-      const hash = `#preset=waymo_like_early_growth&v=${VERSION}&number_of_cities=12&retired_variable=42`;
+      const hash = `#preset=waymo_current_early_growth&v=${VERSION}&number_of_cities=12&retired_variable=42`;
       const decoded = decodeState(hash, assumptions);
 
-      expect(decoded.presetId).toBe('waymo_like_early_growth');
+      expect(decoded.presetId).toBe('waymo_current_early_growth');
       expect(decoded.inputs.number_of_cities).toBe(12);
       expect(decoded.inputs).not.toHaveProperty('retired_variable');
       expect(warnSpy).toHaveBeenCalled();
     });
 
     it('ignores non-numeric values for known variables', () => {
-      const hash = `#preset=waymo_like_early_growth&v=${VERSION}&number_of_cities=banana`;
+      const hash = `#preset=waymo_current_early_growth&v=${VERSION}&number_of_cities=banana`;
       const decoded = decodeState(hash, assumptions);
 
       expect(decoded.inputs.number_of_cities).toBe(
-        assumptions.presets.waymo_like_early_growth.inputs.number_of_cities
+        assumptions.presets.waymo_current_early_growth.inputs.number_of_cities
       );
       expect(warnSpy).toHaveBeenCalled();
     });
@@ -174,7 +211,7 @@ describe('url-state', () => {
         const decoded = decodeState(hash, assumptions);
 
         expect(decoded.presetId).toBe(DEFAULT_PRESET);
-        expect(decoded.architectureId).toBe('waymo_like');
+        expect(decoded.architectureId).toBe('waymo_current');
         expect(decoded.versionMismatch).toBe(false);
         expect(decoded.inputs).toEqual(
           assumptions.presets[DEFAULT_PRESET].inputs
@@ -191,7 +228,7 @@ describe('url-state', () => {
         const decoded = decodeState(hash, assumptions);
 
         expect(decoded.presetId).toBe(DEFAULT_PRESET);
-        expect(decoded.architectureId).toBe('waymo_like');
+        expect(decoded.architectureId).toBe('waymo_current');
         expect(decoded.modelVersion).toBe(VERSION);
         expect(decoded.versionMismatch).toBe(false);
         expect(decoded.inputs).toEqual(
@@ -205,11 +242,11 @@ describe('url-state', () => {
   describe('buildShareableUrl', () => {
     it('appends the encoded hash to the base URL', () => {
       const inputs = {
-        ...assumptions.presets.waymo_like_early_growth.inputs,
+        ...assumptions.presets.waymo_current_early_growth.inputs,
         paid_mile_ratio: 0.6,
       };
       const url = buildShareableUrl(
-        'waymo_like_early_growth',
+        'waymo_current_early_growth',
         inputs,
         assumptions,
         VERSION,
@@ -217,14 +254,14 @@ describe('url-state', () => {
       );
 
       expect(url).toBe(
-        `https://example.com/robotaxi/#preset=waymo_like_early_growth&v=${VERSION}&arch=waymo_like&paid_mile_ratio=0.6`
+        `https://example.com/robotaxi/#preset=waymo_current_early_growth&v=${VERSION}&arch=waymo_current&paid_mile_ratio=0.6`
       );
     });
 
     it('replaces an existing hash on the base URL', () => {
-      const inputs = { ...assumptions.presets.waymo_like_early_growth.inputs };
+      const inputs = { ...assumptions.presets.waymo_current_early_growth.inputs };
       const url = buildShareableUrl(
-        'waymo_like_early_growth',
+        'waymo_current_early_growth',
         inputs,
         assumptions,
         VERSION,
@@ -232,7 +269,7 @@ describe('url-state', () => {
       );
 
       expect(url).toBe(
-        `https://example.com/#preset=waymo_like_early_growth&v=${VERSION}&arch=waymo_like`
+        `https://example.com/#preset=waymo_current_early_growth&v=${VERSION}&arch=waymo_current`
       );
     });
   });

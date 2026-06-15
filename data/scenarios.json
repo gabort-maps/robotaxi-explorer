@@ -1,8 +1,9 @@
 {
-  "model_version": "0.2.3",
+  "model_version": "0.3.0",
   "base_assumptions": "assumptions.json",
   "architectures": [
-    "waymo_like",
+    "waymo_current",
+    "waymo_nextgen",
     "cybercab"
   ],
   "maturities": [
@@ -11,56 +12,123 @@
     "replicated_multicity"
   ],
   "presets": {
-    "waymo_like_early_growth": {
-      "label": "Waymo-like · Early growth",
-      "architecture": "waymo_like",
+    "waymo_current_early_growth": {
+      "label": "Waymo current · Early growth",
+      "architecture": "waymo_current",
       "maturity": "early_growth",
-      "description": "Current-generation cost structure across Waymo's 11 serving markets, using an evidence-triangulated active-fleet-equivalent density.",
+      "evidence_quality": "observed_proxy",
+      "description": "Current-generation cost structure across Waymo’s 11 serving markets, using an evidence-triangulated active-fleet-equivalent density.",
       "overrides": {}
     },
-    "waymo_like_mature_dense": {
-      "label": "Waymo-like · Mature dense city",
-      "architecture": "waymo_like",
+    "waymo_current_mature_dense": {
+      "label": "Waymo current · Mature dense city",
+      "architecture": "waymo_current",
       "maturity": "mature_dense",
-      "description": "Higher local density, better utilisation and improved vehicle and operating productivity.",
+      "evidence_quality": "observed_proxy",
+      "description": "Higher local density and better utilisation while retaining the current-generation high-cost vehicle architecture.",
       "overrides": {
         "gross_fare_per_paid_mile": 3.8,
         "revenue_leakage_rate": 0.1,
         "paid_mile_ratio": 0.62,
-        "vehicle_av_capex": 140000,
+        "vehicle_av_capex": 150000,
         "vehicle_lifetime_miles": 300000,
         "residual_value_pct": 0.15,
         "direct_running_cost_per_total_mile": 0.28,
         "local_fleet_ops_cost_per_total_mile": 0.15,
         "active_vehicles_per_city": 1000,
-        "annual_platform_cost": 220000000,
-        "annual_city_cost_per_city": 5000000
+        "number_of_cities": 11,
+        "annual_platform_fixed_cost": 190000000,
+        "platform_cost_per_vehicle_year": 7000,
+        "city_launch_cost": 15000000,
+        "recurring_city_overhead": 2500000,
+        "amortisation_period_years": 5
       }
     },
-    "waymo_like_replicated_multicity": {
-      "label": "Waymo-like · Replicated multi-city",
-      "architecture": "waymo_like",
+    "waymo_current_replicated_multicity": {
+      "label": "Waymo current · Replicated multi-city",
+      "architecture": "waymo_current",
       "maturity": "replicated_multicity",
-      "description": "A 25-city network with lower vehicle cost, high utilisation and increasingly repeatable city launches.",
+      "evidence_quality": "stress_legacy",
+      "description": "Stress-test legacy architecture across a broad 25-market network. Tests whether scale can overcome the current-generation vehicle cost stack.",
       "overrides": {
         "gross_fare_per_paid_mile": 3.5,
         "revenue_leakage_rate": 0.1,
         "paid_mile_ratio": 0.63,
-        "vehicle_av_capex": 120000,
+        "vehicle_av_capex": 150000,
         "vehicle_lifetime_miles": 350000,
         "residual_value_pct": 0.2,
         "direct_running_cost_per_total_mile": 0.25,
         "local_fleet_ops_cost_per_total_mile": 0.13,
         "active_vehicles_per_city": 1000,
         "number_of_cities": 25,
-        "annual_platform_cost": 240000000,
-        "annual_city_cost_per_city": 4000000
+        "annual_platform_fixed_cost": 165000000,
+        "platform_cost_per_vehicle_year": 3000,
+        "city_launch_cost": 10000000,
+        "recurring_city_overhead": 2000000,
+        "amortisation_period_years": 5
+      }
+    },
+    "waymo_nextgen_early_growth": {
+      "label": "Waymo next-gen · Early growth",
+      "architecture": "waymo_nextgen",
+      "maturity": "early_growth",
+      "evidence_quality": "forward_looking",
+      "description": "Next-generation vehicle economics arriving before full network maturity. Tests cost-down hardware with early-growth density and replication burden.",
+      "overrides": {}
+    },
+    "waymo_nextgen_mature_dense": {
+      "label": "Waymo next-gen · Mature dense city",
+      "architecture": "waymo_nextgen",
+      "maturity": "mature_dense",
+      "evidence_quality": "forward_looking",
+      "description": "Next-generation vehicle cost-down combined with higher local density, better utilisation and improved local operating productivity.",
+      "overrides": {
+        "gross_fare_per_paid_mile": 3.6,
+        "revenue_leakage_rate": 0.1,
+        "paid_mile_ratio": 0.63,
+        "vehicle_av_capex": 90000,
+        "vehicle_lifetime_miles": 350000,
+        "residual_value_pct": 0.15,
+        "direct_running_cost_per_total_mile": 0.24,
+        "local_fleet_ops_cost_per_total_mile": 0.14,
+        "active_vehicles_per_city": 1000,
+        "number_of_cities": 11,
+        "annual_platform_fixed_cost": 180000000,
+        "platform_cost_per_vehicle_year": 6000,
+        "city_launch_cost": 14000000,
+        "recurring_city_overhead": 2500000,
+        "amortisation_period_years": 5
+      }
+    },
+    "waymo_nextgen_replicated_multicity": {
+      "label": "Waymo next-gen · Replicated multi-city",
+      "architecture": "waymo_nextgen",
+      "maturity": "replicated_multicity",
+      "evidence_quality": "forward_looking",
+      "description": "Forward-looking cost-down Waymo architecture across a 25-city replicated network with stronger utilisation and launch reuse.",
+      "overrides": {
+        "gross_fare_per_paid_mile": 3.4,
+        "revenue_leakage_rate": 0.1,
+        "paid_mile_ratio": 0.65,
+        "vehicle_av_capex": 80000,
+        "vehicle_lifetime_miles": 400000,
+        "residual_value_pct": 0.2,
+        "direct_running_cost_per_total_mile": 0.22,
+        "local_fleet_ops_cost_per_total_mile": 0.12,
+        "active_vehicles_per_city": 1000,
+        "number_of_cities": 25,
+        "annual_platform_fixed_cost": 155000000,
+        "platform_cost_per_vehicle_year": 3000,
+        "city_launch_cost": 9000000,
+        "recurring_city_overhead": 2000000,
+        "amortisation_period_years": 5
       }
     },
     "cybercab_early_growth": {
       "label": "Cybercab · Early growth",
       "architecture": "cybercab",
       "maturity": "early_growth",
+      "evidence_quality": "claims_realised",
       "description": "Evidence-weighted Cybercab architecture with lower vehicle cost but limited density and high central uncertainty.",
       "overrides": {}
     },
@@ -68,6 +136,7 @@
       "label": "Cybercab · Mature dense city",
       "architecture": "cybercab",
       "maturity": "mature_dense",
+      "evidence_quality": "claims_realised",
       "description": "A denser Cybercab network with improved utilisation, lower manufacturing cost and better local productivity.",
       "overrides": {
         "gross_fare_per_paid_mile": 2.75,
@@ -80,14 +149,18 @@
         "local_fleet_ops_cost_per_total_mile": 0.15,
         "active_vehicles_per_city": 1000,
         "number_of_cities": 6,
-        "annual_platform_cost": 275000000,
-        "annual_city_cost_per_city": 4000000
+        "annual_platform_fixed_cost": 230000000,
+        "platform_cost_per_vehicle_year": 8000,
+        "city_launch_cost": 10000000,
+        "recurring_city_overhead": 2000000,
+        "amortisation_period_years": 5
       }
     },
     "cybercab_replicated_multicity": {
       "label": "Cybercab · Replicated multi-city",
       "architecture": "cybercab",
       "maturity": "replicated_multicity",
+      "evidence_quality": "claims_realised",
       "description": "Claims-realised vehicle economics combined with mature utilisation and broad platform absorption.",
       "overrides": {
         "gross_fare_per_paid_mile": 2.5,
@@ -100,8 +173,11 @@
         "local_fleet_ops_cost_per_total_mile": 0.13,
         "active_vehicles_per_city": 1000,
         "number_of_cities": 15,
-        "annual_platform_cost": 300000000,
-        "annual_city_cost_per_city": 3000000
+        "annual_platform_fixed_cost": 210000000,
+        "platform_cost_per_vehicle_year": 6000,
+        "city_launch_cost": 8000000,
+        "recurring_city_overhead": 1500000,
+        "amortisation_period_years": 5
       }
     }
   }

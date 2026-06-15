@@ -1,5 +1,5 @@
 {
-  "model_version": "0.2.3",
+  "model_version": "0.3.0",
   "sources": {
     "src_model_base_v1": {
       "citation": "Robotaxi Transparent Base-Case Model v1",
@@ -144,6 +144,54 @@
       "type": "primary_company",
       "confidence": "high",
       "note": "Waymo said it was laying groundwork for ride-hailing operations in over 20 additional cities during 2026. A 25-city high scenario is therefore conservative rather than aggressive."
+    },
+    "src_platform_cost_split": {
+      "citation": "AI-Native Autonomous Driving Platform Scalability — High-Confidence Consolidated Research Output v1",
+      "url": null,
+      "accessed": "2026-06-13",
+      "type": "consolidated_research",
+      "confidence": "high_on_mechanism_low_on_dollars",
+      "note": "Supports splitting Layer 3 into fixed, activity-driven, release-driven, regional and geography-triggered components. Does not disclose company-specific dollar allocations."
+    },
+    "src_ai_platform_scalability": {
+      "citation": "AI-Native Autonomous Driving Platform Scalability Evidence Matrix v1",
+      "url": null,
+      "accessed": "2026-06-13",
+      "type": "consolidated_research",
+      "confidence": "high_on_cost_behaviour_low_on_magnitude",
+      "note": "Supports recurring AI-production activities and architecture-dependent platform-cost behaviour."
+    },
+    "src_city_launch_evidence": {
+      "citation": "Robotaxi Scalability High-Confidence Consolidated Research Findings v1",
+      "url": null,
+      "accessed": "2026-06-13",
+      "type": "consolidated_research",
+      "confidence": "high_on_categories_low_medium_on_dollars",
+      "note": "Supports separating city/ODD launch costs from recurring city-year overhead and local fleet operations."
+    },
+    "src_amortisation_period_rationale": {
+      "citation": "Robotaxi Scalability Explorer v0.3.0 methodology decision",
+      "url": null,
+      "accessed": "2026-06-15",
+      "type": "internal_model_methodology",
+      "confidence": "scenario",
+      "note": "Five-year base amortisation preserves the v0.2.3 city burden bridge: $20M launch cost / 5 years + $3M recurring overhead = $7M per city-year. The 3-10 year range is a sensitivity assumption, not a disclosed accounting policy."
+    },
+    "src_waymo_nextgen_cost_down": {
+      "citation": "Consolidated Sprint 1: Waymo Vehicle Capex, AV Hardware and Depreciation",
+      "url": null,
+      "accessed": "2026-06-12",
+      "type": "consolidated_research",
+      "confidence": "medium_on_direction_low_medium_on_magnitude",
+      "note": "Supports separating current Waymo I-PACE/5th-gen from next-gen Ojai/IONIQ 5/6th-gen cost-down scenario."
+    },
+    "src_current_waymo_vehicle_cost": {
+      "citation": "Consolidated Sprint 1: current Waymo I-PACE / 5th-generation cost scenario",
+      "url": null,
+      "accessed": "2026-06-12",
+      "type": "consolidated_research",
+      "confidence": "low_medium",
+      "note": "Supports the $150k-$200k current-generation scenario range; not an official Waymo vehicle cost."
     }
   }
 }

@@ -1,14 +1,14 @@
 // calculation-engine.js — pure calculation logic for the robotaxi economics model
 //
 // No DOM, no Plotly, no side effects. Formulas implement the canonical
-// `code_expression` fields in data/model-formulas.json (v0.2.0); the test
-// suite pins the results against the six canonical presets and two edge
+// `code_expression` fields in data/model-formulas.json (v0.3.0); the test
+// suite pins the results against the nine canonical presets and three edge
 // cases in the `test_cases` block of the same file.
 //
-// v0.2.0 data is architecture-nested: every variable and constant carries a
-// waymo_like and a cybercab definition. loadAssumptions(architectureId)
-// resolves one architecture into the flat shape the rest of the engine and
-// the UI consume.
+// v0.3.0 data is architecture-nested across three architectures: waymo_current,
+// waymo_nextgen, and cybercab. loadAssumptions(architectureId) resolves one
+// architecture into the flat shape the rest of the engine and UI consume, while
+// keeping all nine preset baselines available for URL decoding.
 
 import assumptionsJson from '../data/assumptions.json';
 import scenariosJson from '../data/scenarios.json';
@@ -18,10 +18,10 @@ import sourcesJson from '../data/sources.json';
 /**
  * Normalize the four data files for one architecture.
  *
- * `architectureId` is required ("waymo_like" or "cybercab"). Each variable is
- * flattened by merging its shared top-level fields (label, unit, layer,
- * ui_group, display_unit, quick_values) with the selected architecture's
- * nest (value, range, slider, confidence, range_basis, solver, ...).
+ * `architectureId` must be one of "waymo_current", "waymo_nextgen", "cybercab".
+ * Each variable is flattened by merging its shared top-level fields (label,
+ * unit, layer, ui_group, display_unit, quick_values) with the selected
+ * architecture's nest (value, range, slider, confidence, range_basis, solver).
  *
  * Returns:
  *   modelVersion, modelName, positioning
@@ -35,7 +35,7 @@ import sourcesJson from '../data/sources.json';
  *   variableIds       — all variable ids in file order
  *   mainVariableIds   — the ui_group === "main" subset (tornado scope)
  *   baseInputs        — { variableId: architecture base value }
- *   presets           — ALL six presets. Each preset's `inputs` are resolved
+ *   presets           — ALL nine presets. Each preset's `inputs` are resolved
  *                       against that preset's OWN architecture (base values +
  *                       overrides), so preset baselines are correct no matter
  *                       which architecture this call resolved. This is what
@@ -81,6 +81,7 @@ export function loadAssumptions(architectureId) {
       label: preset.label,
       architecture: preset.architecture,
       maturity: preset.maturity,
+      evidence_quality: preset.evidence_quality,
       description: preset.description,
       overrides: { ...preset.overrides },
       inputs,
@@ -114,17 +115,19 @@ export function loadAssumptions(architectureId) {
  *
  * `inputs` must contain a value for every variable id; `assumptions` is the
  * object returned by loadAssumptions(). Returns { inputs, derived, outputs,
- * sankey }. v0.2.0 derives net revenue from gross fare × (1 − leakage) and
- * depreciation from capex × (1 − residual value); platform cost per paid
- * mile is computed once and exposed in both derived and outputs (the data
- * file lists it in both blocks).
+ * sankey }.
  *
- * The Sankey flows extend model-formulas.json's spec by splitting the
- * vehicle ribbon (depreciation vs running cost) and the local-operations
- * ribbon (fleet ops vs city launch) into separate branches, and keep the
- * edge-case clamping: a negative city contribution clamps the
- * revenue→contribution flow to 0 and the platform shortfall flows in as
- * "External funding" so the platform node stays balanced.
+ * v0.3.0 formula changes:
+ *   - annual_city_burden_per_city = (city_launch_cost / amortisation_period_years)
+ *     + recurring_city_overhead  (replaces flat annual_city_cost_per_city)
+ *   - annual_platform_burden = annual_platform_fixed_cost
+ *     + platform_cost_per_vehicle_year × totalActiveFleet
+ *     (replaces flat annual_platform_cost)
+ *
+ * The Sankey flows use the split visual topology: vehicle ribbon splits into
+ * depreciation + direct running cost; local-operations ribbon splits into
+ * fleet ops + city launch and recurring. Platform cost remains a single
+ * combined ribbon (fixed + per-vehicle burden).
  */
 export function computeScenario(inputs, assumptions) {
   const constants = assumptions.constants;
@@ -145,12 +148,22 @@ export function computeScenario(inputs, assumptions) {
     inputs.paid_mile_ratio;
   const localVariableOpsPerPaidMile =
     inputs.local_fleet_ops_cost_per_total_mile / inputs.paid_mile_ratio;
+
+  // v0.3.0: city burden decomposed into amortised launch + recurring overhead
+  const annualCityBurdenPerCity =
+    inputs.city_launch_cost / inputs.amortisation_period_years +
+    inputs.recurring_city_overhead;
   const cityFixedCostPerPaidMile =
-    inputs.annual_city_cost_per_city /
+    annualCityBurdenPerCity /
     (inputs.active_vehicles_per_city *
       constants.annual_total_vehicle_miles_per_vehicle *
       inputs.paid_mile_ratio);
-  const platformCostPerPaidMile = inputs.annual_platform_cost / annualPaidMiles;
+
+  // v0.3.0: platform burden decomposed into fixed + per-vehicle-year component
+  const annualPlatformBurden =
+    inputs.annual_platform_fixed_cost +
+    inputs.platform_cost_per_vehicle_year * totalActiveFleet;
+  const platformCostPerPaidMile = annualPlatformBurden / annualPaidMiles;
 
   // primary_outputs
   const directCostPerPaidMile =
@@ -162,9 +175,9 @@ export function computeScenario(inputs, assumptions) {
   const breakEvenGapPerPaidMile = Math.max(0, -enterpriseResultPerPaidMile);
 
   // Sankey flows. Two ribbons of the data file's 8-flow spec are split for
-  // the visual (8 terminal branches in total): "Vehicle and engineering"
-  // becomes depreciation + direct running cost, and the old local-operations
-  // bundle becomes local fleet ops + city launch and recurring. City launch
+  // the visual (7 terminal nodes, 10 flows): "Vehicle and engineering"
+  // becomes depreciation + direct running cost, and the local-operations
+  // bundle becomes local fleet ops + city launch-and-recurring. City launch
   // flows from Net revenue (not City contribution) because the model counts
   // it inside direct cost — the City contribution node keeps equaling the
   // city_contribution_per_paid_mile output.
@@ -239,7 +252,9 @@ export function computeScenario(inputs, assumptions) {
       depreciation_per_total_mile: depreciationPerTotalMile,
       vehicle_cost_per_paid_mile: vehicleCostPerPaidMile,
       local_variable_ops_per_paid_mile: localVariableOpsPerPaidMile,
+      annual_city_burden_per_city: annualCityBurdenPerCity,
       city_fixed_cost_per_paid_mile: cityFixedCostPerPaidMile,
+      annual_platform_burden: annualPlatformBurden,
       platform_cost_per_paid_mile: platformCostPerPaidMile,
     },
     outputs: {

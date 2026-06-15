@@ -21,10 +21,10 @@ import { MOBILE_QUERY } from './plotly-custom.js';
 // Decode with a probe load first: preset baselines are resolved against each
 // preset's own architecture, so the decoded inputs are correct even when the
 // URL points at the other architecture — we then load that architecture.
-const probe = loadAssumptions('waymo_like');
+const probe = loadAssumptions('waymo_current');
 const decoded = decodeState(window.location.hash, probe);
 let assumptions =
-  decoded.architectureId === 'waymo_like'
+  decoded.architectureId === 'waymo_current'
     ? probe
     : loadAssumptions(decoded.architectureId);
 
@@ -38,6 +38,17 @@ const state = {
   breakEven: null,
   tornado: null, // consumed by the chart renderers
 };
+
+// Per-preset in-memory slider cache: Map<presetId, inputs>. Each of the 9
+// presets remembers its own adjustments independently. Session-only — not
+// encoded in the URL. Seeded with the decoded URL state so a shared link's
+// deltas survive the first architecture or maturity switch.
+const presetCache = new Map();
+presetCache.set(decoded.presetId, { ...decoded.inputs });
+
+function saveCurrentState() {
+  presetCache.set(state.presetId, { ...state.inputs });
+}
 
 const refs = ui.buildUI(root, assumptions, {
   onSliderInput: handleSliderInput,
@@ -100,11 +111,20 @@ function handleSliderInput(variableId, value) {
 }
 
 function applyPreset(presetId) {
+  // Persist the outgoing preset's slider values before switching.
+  saveCurrentState();
+
   state.presetId = presetId;
-  state.inputs = { ...assumptions.presets[presetId].inputs };
+  // Restore cached adjustments if the user has visited this preset before,
+  // otherwise start from the preset's own architecture baseline.
+  state.inputs = presetCache.has(presetId)
+    ? { ...presetCache.get(presetId) }
+    : { ...assumptions.presets[presetId].inputs };
+
   ui.updateSliderSpecs(refs, assumptions);
   ui.setActiveArchitecture(refs, assumptions);
   ui.setActiveMaturity(refs, assumptions.presets[presetId].maturity);
+  ui.updateEvidenceQuality(refs, state.presetId, assumptions);
   ui.setSliderValues(refs, state.inputs, assumptions);
   recompute();
   syncHash();
@@ -112,9 +132,12 @@ function applyPreset(presetId) {
 
 function handleArchitectureSelect(architectureId) {
   if (architectureId === state.architectureId) return;
+  // Capture the active maturity before swapping assumptions so the new
+  // architecture opens on the same maturity dimension.
+  const currentMaturity = assumptions.presets[state.presetId].maturity;
   assumptions = loadAssumptions(architectureId);
   state.architectureId = architectureId;
-  applyPreset(assumptions.defaultPresetId);
+  applyPreset(`${architectureId}_${currentMaturity}`);
 }
 
 function handleMaturitySelect(maturity) {
@@ -122,6 +145,8 @@ function handleMaturitySelect(maturity) {
 }
 
 function handleReset() {
+  // Clear only the active preset's cached adjustments; leave the other 8 untouched.
+  presetCache.delete(state.presetId);
   state.inputs = { ...assumptions.presets[state.presetId].inputs };
   ui.setSliderValues(refs, state.inputs, assumptions);
   recompute();
@@ -170,6 +195,7 @@ async function copyToClipboard(text) {
 // Initial paint from the decoded URL state (or the default preset).
 ui.setActiveArchitecture(refs, assumptions);
 ui.setActiveMaturity(refs, assumptions.presets[state.presetId].maturity);
+ui.updateEvidenceQuality(refs, state.presetId, assumptions);
 ui.setSliderValues(refs, state.inputs, assumptions);
 if (decoded.versionMismatch) ui.showVersionBanner(refs);
 recompute();

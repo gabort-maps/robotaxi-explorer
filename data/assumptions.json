@@ -1,12 +1,17 @@
 {
-  "model_version": "0.2.3",
+  "model_version": "0.3.0",
   "model_name": "Robotaxi Scalability Explorer",
   "positioning": "Educational scenario model, not a claimed Waymo or Tesla P&L or investment forecast.",
   "architectures": {
-    "waymo_like": {
-      "label": "Waymo-like evidence case",
-      "description": "Premium vehicle, multi-sensor, ODD-led full-stack robotaxi architecture with the strongest available operational evidence.",
-      "evidence_posture": "Evidence-led scenario with several undisclosed cost lines."
+    "waymo_current": {
+      "label": "Waymo current evidence case",
+      "description": "Current / I-PACE-style premium EV, multi-sensor, ODD-led full-stack robotaxi architecture. Represents the current high-cost evidence proxy rather than Waymo’s next-generation cost-down direction.",
+      "evidence_posture": "Observed-proxy scenario with several undisclosed cost lines."
+    },
+    "waymo_nextgen": {
+      "label": "Waymo next-gen cost-down case",
+      "description": "Forward-looking Waymo Ojai / Hyundai IONIQ 5 + 6th-generation Driver scenario, representing lower-cost integrated hardware and next-generation vehicle economics.",
+      "evidence_posture": "Forward-looking cost-down scenario. Direction is supported by Waymo’s hardware-generation disclosures, but realised unit economics are not disclosed."
     },
     "cybercab": {
       "label": "Cybercab claim-based case",
@@ -21,14 +26,23 @@
   ],
   "constants": {
     "annual_total_vehicle_miles_per_vehicle": {
-      "waymo_like": {
+      "waymo_current": {
         "value": 70000,
         "unit": "total vehicle miles per vehicle-year",
         "confidence": "medium",
         "source_ids": [
           "src_utilisation"
         ],
-        "methodology_note": "Held constant in v0.2 to keep the interface focused."
+        "methodology_note": "Held constant for comparability. This is a high-utilisation modelling anchor, not a disclosed Waymo vehicle-year figure."
+      },
+      "waymo_nextgen": {
+        "value": 70000,
+        "unit": "total vehicle miles per vehicle-year",
+        "confidence": "medium-low",
+        "source_ids": [
+          "src_utilisation"
+        ],
+        "methodology_note": "Forward-looking scenario held equal to the Waymo-current case for comparability."
       },
       "cybercab": {
         "value": 70000,
@@ -48,7 +62,7 @@
       "layer": "revenue",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 4.0,
           "range": {
             "low": 3.2,
@@ -61,12 +75,37 @@
             "step": 0.05
           },
           "confidence": "low-medium",
-          "range_basis": "Scenario range calibrated to the previous Waymo-like base model. Public operator fare data vary by city, trip and time, and do not provide a clean network-wide paid-mile average.",
+          "range_basis": "Scenario range calibrated to the previous Waymo current base model. Public operator fare data vary by city, trip and time, and do not provide a clean network-wide paid-mile average.",
           "justification": "Gross fare is separated from distribution leakage so the user can test direct-channel and aggregator-heavy models explicitly.",
           "source_ids": [
             "src_model_base_v1"
           ],
           "methodology_note": "Passenger price before distribution or aggregator leakage. Taxes and operating costs shown elsewhere must not be deducted here.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "higher"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 3.8,
+          "range": {
+            "low": 3.0,
+            "base": 3.8,
+            "high": 4.8
+          },
+          "slider": {
+            "min": 2.0,
+            "max": 6.0,
+            "step": 0.05
+          },
+          "confidence": "low-medium",
+          "range_basis": "Forward-looking Waymo cost-down scenario. Pricing power may compress as service matures; public operator fare data do not provide a clean network-wide paid-mile average.",
+          "justification": "Separates passenger price from distribution leakage while allowing next-generation cost-down scenarios to test lower pricing.",
+          "source_ids": [
+            "src_model_base_v1",
+            "src_waymo_nextgen_cost_down"
+          ],
+          "methodology_note": "Forward-looking gross fare assumption. Not a disclosed Waymo next-generation network average.",
           "solver": {
             "enabled": true,
             "improves_when": "higher"
@@ -113,7 +152,7 @@
         0.3
       ],
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 0.1,
           "range": {
             "low": 0.0,
@@ -127,13 +166,39 @@
           },
           "confidence": "medium",
           "range_basis": "Official platform disclosures show variable service fees. Lyft reports an average fee near 14% and a 30% cap; Uber states its fee varies by trip. The base represents blended direct and partner distribution.",
-          "justification": "A Waymo-like operator may sell directly and through partners such as ride-hailing aggregators. The leakage rate should therefore remain user-controlled.",
+          "justification": "A Waymo current operator may sell directly and through partners such as ride-hailing aggregators. The leakage rate should therefore remain user-controlled.",
           "source_ids": [
             "src_uber_service_fee",
             "src_lyft_fee_cap",
             "src_lyft_earnings"
           ],
           "methodology_note": "Distribution or aggregator share only. Do not include taxes, tolls, insurance, city overhead or fleet operating cost, which belong elsewhere in the model.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "lower"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 0.1,
+          "range": {
+            "low": 0.0,
+            "base": 0.1,
+            "high": 0.3
+          },
+          "slider": {
+            "min": 0.0,
+            "max": 0.3,
+            "step": 0.01
+          },
+          "confidence": "medium",
+          "range_basis": "Forward-looking Waymo scenario retains the same direct-plus-partner distribution uncertainty as the current evidence case.",
+          "justification": "A next-generation vehicle does not resolve distribution-channel economics.",
+          "source_ids": [
+            "src_uber_service_fee",
+            "src_lyft_fee_cap",
+            "src_lyft_earnings"
+          ],
+          "methodology_note": "Distribution or aggregator share only.",
           "solver": {
             "enabled": true,
             "improves_when": "lower"
@@ -174,7 +239,7 @@
       "layer": "cross_layer",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 0.55,
           "range": {
             "low": 0.45,
@@ -187,12 +252,37 @@
             "step": 0.01
           },
           "confidence": "medium-high",
-          "range_basis": "Based on consolidated Waymo-like passenger-onboard versus total-mile evidence, with low and high cases reflecting fragmented versus dense operations.",
+          "range_basis": "Based on consolidated Waymo current passenger-onboard versus total-mile evidence, with low and high cases reflecting fragmented versus dense operations.",
           "justification": "Every empty mile carries depreciation, energy, maintenance, insurance and operating cost.",
           "source_ids": [
             "src_utilisation"
           ],
           "methodology_note": "Paid vehicle miles divided by total vehicle miles. It is not passenger occupancy and not vehicle availability.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "higher"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 0.57,
+          "range": {
+            "low": 0.45,
+            "base": 0.57,
+            "high": 0.68
+          },
+          "slider": {
+            "min": 0.4,
+            "max": 0.75,
+            "step": 0.01
+          },
+          "confidence": "medium-low",
+          "range_basis": "Forward-looking scenario assumes modest improvement from better fleet maturity, but density and service design remain decisive.",
+          "justification": "Next-generation vehicles do not eliminate deadheading or repositioning.",
+          "source_ids": [
+            "src_utilisation",
+            "src_cost_architecture"
+          ],
+          "methodology_note": "Scenario input only. Paid vehicle miles divided by total vehicle miles.",
           "solver": {
             "enabled": true,
             "improves_when": "higher"
@@ -231,7 +321,7 @@
       "layer": "vehicle",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 175000,
           "range": {
             "low": 150000,
@@ -239,18 +329,43 @@
             "high": 200000
           },
           "slider": {
-            "min": 100000,
-            "max": 225000,
+            "min": 150000,
+            "max": 200000,
             "step": 5000
           },
           "confidence": "low-medium",
-          "range_basis": "Current-generation premium EV plus autonomous-integration scenario. Exact Waymo all-in vehicle cost is not disclosed.",
-          "justification": "Vehicle capex affects depreciation, but the effect depends on lifetime miles and residual value.",
+          "range_basis": "Current / I-PACE-style premium EV plus autonomous-integration scenario. Exact Waymo all-in vehicle cost is not disclosed.",
+          "justification": "Vehicle capex affects depreciation, but current-generation economics should not be blended with next-generation cost-down claims.",
           "source_ids": [
             "src_depreciation_residual",
-            "src_model_base_v1"
+            "src_current_waymo_vehicle_cost"
           ],
           "methodology_note": "Includes base vehicle and installed autonomous-driving hardware. Excludes depots and central platform development.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "lower"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 100000,
+          "range": {
+            "low": 75000,
+            "base": 100000,
+            "high": 125000
+          },
+          "slider": {
+            "min": 75000,
+            "max": 125000,
+            "step": 5000
+          },
+          "confidence": "low-medium",
+          "range_basis": "Next-generation Waymo Ojai / Hyundai IONIQ 5 + 6th-generation Driver cost-down scenario. Direction is supported; realised all-in unit cost is not disclosed.",
+          "justification": "Separates forward-looking Waymo cost-down from the current high-cost evidence proxy.",
+          "source_ids": [
+            "src_waymo_nextgen_cost_down",
+            "src_depreciation_residual"
+          ],
+          "methodology_note": "Includes base vehicle and installed autonomy hardware. Forward-looking scenario, not observed fleet purchase cost.",
           "solver": {
             "enabled": true,
             "improves_when": "lower"
@@ -270,7 +385,7 @@
           },
           "confidence": "low",
           "range_basis": "The $30,000 Cybercab figure is an aspirational endpoint. A higher evidence-weighted base recognises unproven production cost, commercial equipment and early ramp inefficiency.",
-          "justification": "Cybercab may be materially cheaper than a Waymo-like vehicle, but no audited bill of materials or realised fleet purchase price exists.",
+          "justification": "Cybercab may be materially cheaper than a Waymo current vehicle, but no audited bill of materials or realised fleet purchase price exists.",
           "source_ids": [
             "src_tesla_q1_2026",
             "src_tesla_cybercab_claims",
@@ -290,7 +405,7 @@
       "layer": "vehicle",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 250000,
           "range": {
             "low": 200000,
@@ -304,6 +419,30 @@
           },
           "confidence": "medium-low",
           "range_basis": "Commercial high-mileage scenario constrained by battery wear, accident exposure, interior deterioration and AV hardware obsolescence.",
+          "justification": "Longer productive life spreads vehicle capital over more service.",
+          "source_ids": [
+            "src_depreciation_residual"
+          ],
+          "methodology_note": "Lifetime total miles before economic retirement or major replacement, not paid miles.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "higher"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 300000,
+          "range": {
+            "low": 250000,
+            "base": 300000,
+            "high": 400000
+          },
+          "slider": {
+            "min": 200000,
+            "max": 450000,
+            "step": 10000
+          },
+          "confidence": "medium-low",
+          "range_basis": "Forward-looking integrated vehicle scenario may support longer economic life, but residual value and hardware obsolescence remain uncertain.",
           "justification": "Longer productive life spreads vehicle capital over more service.",
           "source_ids": [
             "src_depreciation_residual"
@@ -348,7 +487,7 @@
       "layer": "vehicle",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 0.1,
           "range": {
             "low": 0.0,
@@ -367,6 +506,30 @@
             "src_depreciation_residual"
           ],
           "methodology_note": "Percentage of initial vehicle and AV-kit capex recovered at economic retirement. It is not necessarily an external retail resale value.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "higher"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 0.1,
+          "range": {
+            "low": 0.0,
+            "base": 0.1,
+            "high": 0.3
+          },
+          "slider": {
+            "min": 0.0,
+            "max": 0.3,
+            "step": 0.01
+          },
+          "confidence": "low",
+          "range_basis": "No mature secondary market exists for next-generation autonomous fleet vehicles. Potential value may come from batteries, components or a second commercial life inside the same autonomy ecosystem.",
+          "justification": "Residual value materially changes depreciation and remains a core uncertainty.",
+          "source_ids": [
+            "src_depreciation_residual"
+          ],
+          "methodology_note": "Percentage of initial vehicle and AV-kit capex recovered at economic retirement.",
           "solver": {
             "enabled": true,
             "improves_when": "higher"
@@ -405,7 +568,7 @@
       "layer": "vehicle",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 0.31,
           "range": {
             "low": 0.22,
@@ -425,6 +588,32 @@
             "src_ops_labour"
           ],
           "methodology_note": "Includes energy, routine maintenance, AV-specific maintenance and insurance/liability. Energy efficiency is folded into this variable to preserve the top-nine lever design.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "lower"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 0.28,
+          "range": {
+            "low": 0.2,
+            "base": 0.28,
+            "high": 0.45
+          },
+          "slider": {
+            "min": 0.12,
+            "max": 0.6,
+            "step": 0.01
+          },
+          "confidence": "low-medium",
+          "range_basis": "Scenario for energy, routine EV maintenance, AV-specific maintenance and insurance/liability reserve under improved hardware integration.",
+          "justification": "Next-generation hardware may reduce exposure, but maintenance, insurance and validation-related service costs remain.",
+          "source_ids": [
+            "src_energy_depot",
+            "src_ops_labour",
+            "src_waymo_nextgen_cost_down"
+          ],
+          "methodology_note": "Includes energy, routine maintenance, AV-specific maintenance and insurance/liability. Depreciation and local fleet operations are separate.",
           "solver": {
             "enabled": true,
             "improves_when": "lower"
@@ -463,7 +652,7 @@
       "layer": "fleet_city",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 0.2,
           "range": {
             "low": 0.1,
@@ -484,6 +673,32 @@
             "src_cost_architecture"
           ],
           "methodology_note": "Variable local cost per total mile. Excludes separate annual city cost.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "lower"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 0.18,
+          "range": {
+            "low": 0.08,
+            "base": 0.18,
+            "high": 0.35
+          },
+          "slider": {
+            "min": 0.05,
+            "max": 0.55,
+            "step": 0.01
+          },
+          "confidence": "low-medium",
+          "range_basis": "Scenario for depot readiness, charging infrastructure, remote assistance, rider support and field response after overlap controls.",
+          "justification": "Next-generation vehicle integration may improve local workflows, but physical operations remain local.",
+          "source_ids": [
+            "src_ops_labour",
+            "src_energy_depot",
+            "src_cost_architecture"
+          ],
+          "methodology_note": "Variable local cost per total mile. Excludes city launch and recurring city overhead.",
           "solver": {
             "enabled": true,
             "improves_when": "lower"
@@ -522,7 +737,7 @@
       "layer": "fleet_city",
       "ui_group": "main",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 300,
           "range": {
             "low": 250,
@@ -535,7 +750,7 @@
             "step": 25
           },
           "confidence": "high",
-          "range_basis": "The 300 default is a triangulated network-average active-fleet-equivalent, based on Waymo's more than 4 million weekly miles, the model's 70,000 annual miles per active vehicle, and 11 current service markets. The 250–1,000 range is retained so users can test both low-density and highly concentrated city operations.",
+          "range_basis": "The 300 default is a triangulated network-average active-fleet-equivalent, based on Waymo’s more than 4 million weekly miles, the model's 70,000 annual miles per active vehicle, and 11 current service markets. The 250–1,000 range is retained so users can test both low-density and highly concentrated city operations.",
           "justification": "The default represents vehicles generating the modelled annual mileage, not all 3,791 ADS-equipped units covered by the NHTSA recall population.",
           "source_ids": [
             "src_waymo_nhtsa_3791",
@@ -543,6 +758,31 @@
             "src_waymo_current_service_2026"
           ],
           "methodology_note": "300 vehicles per city is the default modelling proxy. It is not a disclosed city-by-city fleet allocation. The range remains deliberately broad for scenario exploration.",
+          "solver": {
+            "enabled": true,
+            "improves_when": "higher"
+          }
+        },
+        "waymo_nextgen": {
+          "value": 300,
+          "range": {
+            "low": 250,
+            "base": 300,
+            "high": 1000
+          },
+          "slider": {
+            "min": 100,
+            "max": 2000,
+            "step": 25
+          },
+          "confidence": "medium-low",
+          "range_basis": "The 300 default is a triangulated network-average active-fleet-equivalent, based on Waymo’s more than 4 million weekly miles, the model's 70,000 annual miles per active vehicle, and 11 current service markets. The 250–1,000 range is retained so users can test both low-density and highly concentrated city operations.",
+          "justification": "The default represents vehicles generating the modelled annual mileage, not all 3,791 ADS-equipped units covered by the NHTSA recall population.",
+          "source_ids": [
+            "src_waymo_nextgen_cost_down",
+            "src_waymo_expansion_2026"
+          ],
+          "methodology_note": "Forward-looking active commercial deployment proxy. Not observed at scale.",
           "solver": {
             "enabled": true,
             "improves_when": "higher"
@@ -581,7 +821,7 @@
       "layer": "replication",
       "ui_group": "advanced",
       "architectures": {
-        "waymo_like": {
+        "waymo_current": {
           "value": 11,
           "range": {
             "low": 10,
@@ -594,13 +834,37 @@
             "step": 1
           },
           "confidence": "high",
-          "range_basis": "Waymo's official rider page lists 11 current service markets. Waymo has also stated that it is laying groundwork for operations in more than 20 additional cities during 2026. The current default of 11 is high-confidence; the 25-city high case is a forward scenario.",
+          "range_basis": "Waymo’s official rider page lists 11 current service markets. Waymo has also stated that it is laying groundwork for operations in more than 20 additional cities during 2026. The current default of 11 is high-confidence; the 25-city high case is a forward scenario.",
           "justification": "The current city count is observable and should not remain a generic six-city assumption. The forward range captures announced expansion while preserving uncertainty about launch timing and commercial maturity.",
           "source_ids": [
             "src_waymo_current_service_2026",
             "src_waymo_expansion_2026"
           ],
           "methodology_note": "The default equals the 11 markets currently serving riders. Testing and announced markets are excluded from the default until they carry paying riders.",
+          "solver": {
+            "enabled": false
+          }
+        },
+        "waymo_nextgen": {
+          "value": 11,
+          "range": {
+            "low": 10,
+            "base": 11,
+            "high": 25
+          },
+          "slider": {
+            "min": 1,
+            "max": 35,
+            "step": 1
+          },
+          "confidence": "medium",
+          "range_basis": "Waymo’s official rider page lists 11 current service markets. Waymo has also stated that it is laying groundwork for operations in more than 20 additional cities during 2026. The current default of 11 is high-confidence; the 25-city high case is a forward scenario.",
+          "justification": "The current city count is observable and should not remain a generic six-city assumption. The forward range captures announced expansion while preserving uncertainty about launch timing and commercial maturity.",
+          "source_ids": [
+            "src_waymo_nextgen_cost_down",
+            "src_waymo_expansion_2026"
+          ],
+          "methodology_note": "Forward-looking commercial market count scenario. Not observed next-generation deployment.",
           "solver": {
             "enabled": false
           }
@@ -631,122 +895,376 @@
         }
       }
     },
-    "annual_platform_cost": {
-      "label": "Annual platform cost",
+    "annual_platform_fixed_cost": {
+      "label": "Annual fixed platform cost",
       "unit": "USD per year",
       "layer": "platform",
       "ui_group": "advanced",
       "architectures": {
-        "waymo_like": {
-          "value": 250000000,
+        "waymo_current": {
+          "value": 200000000,
           "range": {
-            "low": 150000000,
-            "base": 250000000,
-            "high": 400000000
+            "low": 100000000,
+            "base": 200000000,
+            "high": 300000000
           },
           "slider": {
             "min": 50000000,
-            "max": 600000000,
+            "max": 400000000,
             "step": 10000000
           },
           "confidence": "low",
-          "range_basis": "Transparent allocated scenario pool for core autonomy, AI production, simulation, data and software assurance. It is not derived from Alphabet Other Bets.",
-          "justification": "The platform test is whether paid miles and validated coverage grow faster than the production burden.",
+          "range_basis": "Scenario pool for core autonomy stack, central safety architecture, simulation infrastructure, data systems, release tooling and central G&A. It is not derived from Alphabet Other Bets.",
+          "justification": "Only the fixed and reusable portion of the platform burden can be diluted through paid-mile scale.",
           "source_ids": [
-            "src_cost_architecture",
+            "src_platform_cost_split",
+            "src_ai_platform_scalability",
             "src_model_base_v1"
           ],
-          "methodology_note": "Annual enterprise platform pool shared across all active vehicles and cities. Regional and city costs are excluded.",
-          "solver": {
-            "enabled": false
-          }
+          "methodology_note": "Annual platform-fixed pool shared across the active network. Per-vehicle platform burden, regional/city costs and local fleet operations are excluded."
         },
-        "cybercab": {
-          "value": 300000000,
+        "waymo_nextgen": {
+          "value": 190000000,
           "range": {
-            "low": 150000000,
-            "base": 300000000,
-            "high": 500000000
+            "low": 100000000,
+            "base": 190000000,
+            "high": 300000000
           },
           "slider": {
             "min": 50000000,
-            "max": 700000000,
+            "max": 400000000,
             "step": 10000000
           },
           "confidence": "low",
-          "range_basis": "Tesla has large shared AI infrastructure, but no transparent robotaxi allocation. The higher base recognises that lower edge hardware may relocate cost into central AI and validation.",
+          "range_basis": "Forward-looking Waymo scenario with platform reuse but continuing AI-production, simulation, release assurance and safety-case burden.",
+          "justification": "Next-generation hardware may improve edge economics, but central platform work remains material and only partly fixed.",
+          "source_ids": [
+            "src_platform_cost_split",
+            "src_ai_platform_scalability",
+            "src_waymo_nextgen_cost_down"
+          ],
+          "methodology_note": "Forward-looking platform-fixed pool. Not a disclosed Waymo allocation."
+        },
+        "cybercab": {
+          "value": 240000000,
+          "range": {
+            "low": 100000000,
+            "base": 240000000,
+            "high": 300000000
+          },
+          "slider": {
+            "min": 50000000,
+            "max": 400000000,
+            "step": 10000000
+          },
+          "confidence": "low",
+          "range_basis": "Tesla has large shared AI infrastructure, but no transparent robotaxi allocation. The base recognises that lower edge hardware may relocate cost into central AI and validation.",
           "justification": "Consumer-FSD sharing may create leverage, while video training and validation remain substantial. Both effects are unquantified.",
           "source_ids": [
             "src_tesla_consensus",
-            "src_tesla_q1_2026"
+            "src_tesla_q1_2026",
+            "src_platform_cost_split"
           ],
-          "methodology_note": "Robotaxi-allocated annual platform pool. It is not Tesla's total AI spending and should not be set to zero because costs are shared.",
-          "solver": {
-            "enabled": false
-          }
+          "methodology_note": "Robotaxi-allocated annual platform-fixed pool. It is not Tesla's total AI spending and should not be set to zero because costs are shared."
         }
       }
     },
-    "annual_city_cost_per_city": {
-      "label": "Annual city and launch burden",
+    "platform_cost_per_vehicle_year": {
+      "label": "Platform cost per vehicle-year",
+      "unit": "USD per vehicle-year",
+      "layer": "platform",
+      "ui_group": "advanced",
+      "architectures": {
+        "waymo_current": {
+          "value": 8000,
+          "range": {
+            "low": 3000,
+            "base": 8000,
+            "high": 15000
+          },
+          "slider": {
+            "min": 0,
+            "max": 25000,
+            "step": 500
+          },
+          "confidence": "low",
+          "range_basis": "Scenario for cloud, selected data operations, fleet monitoring, release assurance and per-vehicle platform support. Exact Waymo allocation is not disclosed.",
+          "justification": "Platform cost is not purely fixed; some burden scales with fleet size, data activity and deployed vehicles.",
+          "source_ids": [
+            "src_platform_cost_split",
+            "src_ai_platform_scalability"
+          ],
+          "methodology_note": "Annual platform burden that scales with active fleet. Excludes local fleet operations and city overhead."
+        },
+        "waymo_nextgen": {
+          "value": 7000,
+          "range": {
+            "low": 3000,
+            "base": 7000,
+            "high": 14000
+          },
+          "slider": {
+            "min": 0,
+            "max": 25000,
+            "step": 500
+          },
+          "confidence": "low",
+          "range_basis": "Forward-looking scenario in which improved hardware/software integration and validation reuse reduce some per-vehicle platform burden.",
+          "justification": "Next-generation cost-down may improve platform productivity, but data, monitoring and release assurance remain active production activities.",
+          "source_ids": [
+            "src_platform_cost_split",
+            "src_ai_platform_scalability",
+            "src_waymo_nextgen_cost_down"
+          ],
+          "methodology_note": "Scenario only. Not a disclosed Waymo metric."
+        },
+        "cybercab": {
+          "value": 10000,
+          "range": {
+            "low": 3000,
+            "base": 10000,
+            "high": 18000
+          },
+          "slider": {
+            "min": 0,
+            "max": 30000,
+            "step": 500
+          },
+          "confidence": "very-low",
+          "range_basis": "Tesla has no disclosed robotaxi-specific platform support allocation. A camera-led architecture may lower edge hardware but can shift burden into central AI, validation and fleet monitoring.",
+          "justification": "Prevents the model from treating shared AI infrastructure as free.",
+          "source_ids": [
+            "src_tesla_consensus",
+            "src_platform_cost_split",
+            "src_ai_platform_scalability"
+          ],
+          "methodology_note": "Robotaxi-allocated platform cost per active vehicle-year. Scenario only."
+        }
+      }
+    },
+    "city_launch_cost": {
+      "label": "City launch cost",
+      "unit": "USD per city launch",
+      "layer": "replication",
+      "ui_group": "advanced",
+      "architectures": {
+        "waymo_current": {
+          "value": 20000000,
+          "range": {
+            "low": 5000000,
+            "base": 20000000,
+            "high": 50000000
+          },
+          "slider": {
+            "min": 0,
+            "max": 60000000,
+            "step": 1000000
+          },
+          "confidence": "low-medium",
+          "range_basis": "One-time launch-fixed scenario covering mapping/geographic preparation, ODD validation, local permissions, responder preparation, launch team work and setup overhead. Public company-level launch economics are not disclosed.",
+          "justification": "City launch is the replication test; keeping it separate shows whether new markets become easier over time.",
+          "source_ids": [
+            "src_city_launch_evidence",
+            "src_cost_architecture"
+          ],
+          "methodology_note": "One-time per new city before amortisation. Excludes recurring city overhead, depot labour and vehicle capex. Architecture-specific lower launch burden should be tested through preset overrides or user inputs, not treated as observed."
+        },
+        "waymo_nextgen": {
+          "value": 20000000,
+          "range": {
+            "low": 5000000,
+            "base": 20000000,
+            "high": 50000000
+          },
+          "slider": {
+            "min": 0,
+            "max": 60000000,
+            "step": 1000000
+          },
+          "confidence": "low",
+          "range_basis": "One-time launch-fixed scenario covering mapping/geographic preparation, ODD validation, local permissions, responder preparation, launch team work and setup overhead. Public company-level launch economics are not disclosed.",
+          "justification": "City launch is the replication test; keeping it separate shows whether new markets become easier over time.",
+          "source_ids": [
+            "src_city_launch_evidence",
+            "src_waymo_nextgen_cost_down",
+            "src_cost_architecture"
+          ],
+          "methodology_note": "One-time per new city before amortisation. Excludes recurring city overhead, depot labour and vehicle capex. Architecture-specific lower launch burden should be tested through preset overrides or user inputs, not treated as observed."
+        },
+        "cybercab": {
+          "value": 20000000,
+          "range": {
+            "low": 5000000,
+            "base": 20000000,
+            "high": 50000000
+          },
+          "slider": {
+            "min": 0,
+            "max": 60000000,
+            "step": 1000000
+          },
+          "confidence": "low",
+          "range_basis": "One-time launch-fixed scenario covering mapping/geographic preparation, ODD validation, local permissions, responder preparation, launch team work and setup overhead. Public company-level launch economics are not disclosed.",
+          "justification": "City launch is the replication test; keeping it separate shows whether new markets become easier over time.",
+          "source_ids": [
+            "src_tesla_maps_job",
+            "src_tesla_consensus",
+            "src_city_launch_evidence"
+          ],
+          "methodology_note": "One-time per new city before amortisation. Excludes recurring city overhead, depot labour and vehicle capex. Architecture-specific lower launch burden should be tested through preset overrides or user inputs, not treated as observed."
+        }
+      }
+    },
+    "recurring_city_overhead": {
+      "label": "Recurring city overhead",
       "unit": "USD per city-year",
       "layer": "replication",
       "ui_group": "advanced",
       "architectures": {
-        "waymo_like": {
-          "value": 7000000,
+        "waymo_current": {
+          "value": 3000000,
           "range": {
-            "low": 4000000,
-            "base": 7000000,
-            "high": 12000000
+            "low": 1000000,
+            "base": 3000000,
+            "high": 8000000
           },
           "slider": {
-            "min": 2000000,
-            "max": 20000000,
+            "min": 0,
+            "max": 10000000,
+            "step": 500000
+          },
+          "confidence": "low-medium",
+          "range_basis": "Annual city-fixed scenario for local compliance, reporting, government liaison, incident coordination, launch-market management and city-specific overhead.",
+          "justification": "Recurring city overhead is the operating burden left after launch.",
+          "source_ids": [
+            "src_city_launch_evidence",
+            "src_cost_architecture"
+          ],
+          "methodology_note": "Annual cost per active city. Excludes depot variable operations and one-time launch cost. Architecture-specific lower overhead should be tested through preset overrides or user inputs, not treated as observed."
+        },
+        "waymo_nextgen": {
+          "value": 3000000,
+          "range": {
+            "low": 1000000,
+            "base": 3000000,
+            "high": 8000000
+          },
+          "slider": {
+            "min": 0,
+            "max": 10000000,
             "step": 500000
           },
           "confidence": "low",
-          "range_basis": "Combines recurring city overhead with annualised launch and ODD-validation cost. Public company-level launch economics are not disclosed.",
-          "justification": "Each city reopens part of the cost stack. The key test is whether this burden falls across launch cohorts.",
+          "range_basis": "Annual city-fixed scenario for local compliance, reporting, government liaison, incident coordination, launch-market management and city-specific overhead.",
+          "justification": "Recurring city overhead is the operating burden left after launch.",
           "source_ids": [
-            "src_cost_architecture",
-            "src_model_base_v1"
+            "src_city_launch_evidence",
+            "src_cost_architecture"
           ],
-          "methodology_note": "Includes recurring local overhead and annualised launch burden. Variable depot operations are excluded.",
-          "solver": {
-            "enabled": false
-          }
+          "methodology_note": "Annual cost per active city. Excludes depot variable operations and one-time launch cost. Architecture-specific lower overhead should be tested through preset overrides or user inputs, not treated as observed."
         },
         "cybercab": {
-          "value": 5000000,
+          "value": 3000000,
           "range": {
-            "low": 2000000,
-            "base": 5000000,
-            "high": 10000000
+            "low": 1000000,
+            "base": 3000000,
+            "high": 8000000
           },
           "slider": {
-            "min": 1000000,
-            "max": 15000000,
+            "min": 0,
+            "max": 10000000,
             "step": 500000
           },
           "confidence": "low",
-          "range_basis": "Map-light architecture supports a lower mapping component, but local validation, regulation, service support, charging and recovery remain.",
-          "justification": "Tesla may reduce, not eliminate, city-launch burden.",
+          "range_basis": "Annual city-fixed scenario for local compliance, reporting, government liaison, incident coordination, launch-market management and city-specific overhead.",
+          "justification": "Recurring city overhead is the operating burden left after launch.",
           "source_ids": [
-            "src_tesla_maps_job",
-            "src_tesla_consensus"
+            "src_tesla_consensus",
+            "src_city_launch_evidence",
+            "src_cost_architecture"
           ],
-          "methodology_note": "Includes recurring local overhead and annualised launch burden. The lower base is an architectural scenario, not observed launch cost.",
-          "solver": {
-            "enabled": false
-          }
+          "methodology_note": "Annual cost per active city. Excludes depot variable operations and one-time launch cost. Architecture-specific lower overhead should be tested through preset overrides or user inputs, not treated as observed."
+        }
+      }
+    },
+    "amortisation_period_years": {
+      "label": "City launch amortisation period",
+      "unit": "years",
+      "layer": "replication",
+      "ui_group": "advanced",
+      "architectures": {
+        "waymo_current": {
+          "value": 5,
+          "range": {
+            "low": 3,
+            "base": 5,
+            "high": 10
+          },
+          "slider": {
+            "min": 3,
+            "max": 10,
+            "step": 1
+          },
+          "confidence": "low",
+          "range_basis": "Methodology assumption for spreading one-time launch cost over an economic planning period. Public robotaxi operators do not disclose launch-cost amortisation periods.",
+          "justification": "Makes the v0.2.3 combined city-year burden transparent: $20M launch cost over 5 years plus $3M recurring overhead equals $7M per city-year.",
+          "source_ids": [
+            "src_amortisation_period_rationale",
+            "src_city_launch_evidence"
+          ],
+          "methodology_note": "Advanced assumption. It affects only the annualised city burden, not cash timing."
+        },
+        "waymo_nextgen": {
+          "value": 5,
+          "range": {
+            "low": 3,
+            "base": 5,
+            "high": 10
+          },
+          "slider": {
+            "min": 3,
+            "max": 10,
+            "step": 1
+          },
+          "confidence": "low",
+          "range_basis": "Methodology assumption for spreading one-time launch cost over an economic planning period. Public robotaxi operators do not disclose launch-cost amortisation periods.",
+          "justification": "Makes the v0.2.3 combined city-year burden transparent: $20M launch cost over 5 years plus $3M recurring overhead equals $7M per city-year.",
+          "source_ids": [
+            "src_amortisation_period_rationale",
+            "src_city_launch_evidence"
+          ],
+          "methodology_note": "Advanced assumption. It affects only the annualised city burden, not cash timing."
+        },
+        "cybercab": {
+          "value": 5,
+          "range": {
+            "low": 3,
+            "base": 5,
+            "high": 10
+          },
+          "slider": {
+            "min": 3,
+            "max": 10,
+            "step": 1
+          },
+          "confidence": "low",
+          "range_basis": "Methodology assumption for spreading one-time launch cost over an economic planning period. Public robotaxi operators do not disclose launch-cost amortisation periods.",
+          "justification": "Makes the v0.2.3 combined city-year burden transparent: $20M launch cost over 5 years plus $3M recurring overhead equals $7M per city-year.",
+          "source_ids": [
+            "src_amortisation_period_rationale",
+            "src_city_launch_evidence"
+          ],
+          "methodology_note": "Advanced assumption. It affects only the annualised city burden, not cash timing."
         }
       }
     }
   },
   "methodology_notes": {
-    "architecture_vs_maturity": "Architecture and maturity are separate dimensions because combining a Tesla vehicle-cost assumption with Waymo-shaped operating, platform and city-launch assumptions produces an incoherent hybrid. The architecture selector changes linked defaults, credible ranges, confidence and methodology; the maturity selector changes how developed that architecture has become.",
-    "energy_in_direct_running_cost": "Energy efficiency is folded into direct running cost rather than exposed as a separate slider because the public interface is limited to the nine highest-leverage variables. This is a prioritisation decision, not a claim that energy is unimportant. Architecture-specific energy evidence is reflected in the direct-running-cost defaults and ranges.",
-    "waymo_city_and_fleet_basis": "The Waymo-like default uses 11 current rider-service markets and 300 active-fleet-equivalent vehicles per city. The city count is directly observed. The vehicle-density default is triangulated from Waymo's reported weekly mileage and the model's annual-mileage assumption. The 250–1,000 range is retained for experimentation."
+    "architecture_vs_maturity": "Architecture and maturity are separate dimensions because combining a Tesla vehicle-cost assumption with Waymo-shaped operating, platform and city-launch assumptions produces an incoherent hybrid. v0.3 separates Waymo current, Waymo next-gen and Cybercab so observed-proxy and forward-looking evidence are not blended.",
+    "evidence_quality": "Presets carry an evidence_quality tag so users can distinguish observed_proxy, stress_legacy, forward_looking and claims_realised scenarios at the surface level.",
+    "energy_in_direct_running_cost": "Energy efficiency is folded into direct running cost rather than exposed as a separate slider because the public interface focuses on the highest-leverage profitability levers. Architecture-specific energy evidence is reflected in the direct-running-cost defaults and ranges.",
+    "waymo_city_and_fleet_basis": "The Waymo-current default uses 11 current rider-service markets and 300 active-fleet-equivalent vehicles per city. The city count is directly observed. The vehicle-density default is triangulated from Waymo's reported weekly mileage and the model's annual-mileage assumption.",
+    "platform_split": "v0.3 splits annual platform burden into fixed/reusable platform cost and per-vehicle platform cost. Platform leverage applies only to the fixed/reusable portion.",
+    "city_cost_split": "v0.3 splits city cost into one-time launch cost and recurring city overhead. The annual city burden is city_launch_cost divided by amortisation_period_years plus recurring_city_overhead."
   }
 }
