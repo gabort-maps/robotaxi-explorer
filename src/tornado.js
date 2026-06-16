@@ -4,22 +4,30 @@
 // result when that variable moves to its credible range.low / range.high
 // while everything else stays at the current scenario value. Rows arrive
 // pre-sorted by computeTornado() (largest absolute impact first) and render
-// top-down in that order. Bars use one neutral accent on purpose: confidence
-// is shown by the badge column ui.js renders next to this chart, not by
-// color, and bar lengths are NOT normalised — a wider bar genuinely means a
-// wider evidence range.
+// top-down in that order. Bars use diverging colours: red for a negative
+// impact on enterprise result (worsening), green for positive (improving).
+// Confidence is shown by the badge column ui.js renders beside the chart.
+// Bar lengths are NOT normalised — a wider bar genuinely means a wider
+// evidence range.
 
 import Plotly, {
   BASE_CONFIG,
   FONT_FAMILY,
   isCompact,
 } from './plotly-custom.js';
+import { SHORT_LABELS } from './ui.js';
 
-const BAR_COLOR = '#1f4e8c';
+// Analytical diverging palette — distinguishable in light/dark contexts.
+const COLOR_NEG = '#C97164'; // soft coral — worsening
+const COLOR_POS = '#3FA89F'; // muted teal — improving
+
+function barColors(xs) {
+  return xs.map((x) => (x < 0 ? COLOR_NEG : COLOR_POS));
+}
 
 // ui.js mirrors these as the badge column's vertical padding so the badges
 // line up with the bar rows (see .tornado-badges in styles.css).
-export const TORNADO_MARGIN = { l: 8, r: 16, t: 8, b: 44 };
+export const TORNADO_MARGIN = { l: 8, r: 6, t: 8, b: 44 };
 
 /** Break hover text into <br>-separated lines so tooltips stay readable. */
 function wrapForHover(text, lineLength = 55) {
@@ -38,22 +46,32 @@ function wrapForHover(text, lineLength = 55) {
   return lines.join('<br>');
 }
 
+/** Format an impact value as currency string: -$0.16 or $0.86 */
+function fmtImpact(x) {
+  const abs = Math.abs(x).toFixed(2);
+  return x < 0 ? `-$${abs}` : `$${abs}`;
+}
+
 function buildFigure(tornadoData, options) {
   const compact = isCompact(options);
-  const labels = tornadoData.map((row) => row.label);
+  const labels = tornadoData.map(
+    (row) => SHORT_LABELS[row.variableId] ?? row.label
+  );
   const rangeBasis = tornadoData.map((row) => wrapForHover(row.range_basis));
+  // Pre-format impact values in JS — Plotly's d3-format parsing drops the
+  // sign+currency combination (+$.2f), producing raw float strings instead.
   const hovertemplate =
-    '<b>%{y}</b><br>Impact at range %{fullData.name}: %{x:+$.2f} per paid mile' +
-    '<br><br><i>Why this range:</i><br>%{customdata}<extra></extra>';
+    '<b>%{y}</b><br>Impact at range %{fullData.name}: %{customdata[0]} per paid mile' +
+    '<br><br><i>Why this range:</i><br>%{customdata[1]}<extra></extra>';
 
   const makeTrace = (name, xs) => ({
     type: 'bar',
     orientation: 'h',
     name,
     y: labels,
-    x: xs,
-    marker: { color: BAR_COLOR },
-    customdata: rangeBasis,
+    x: xs.map((x) => parseFloat(x.toFixed(2))),
+    marker: { color: barColors(xs) },
+    customdata: xs.map((x, i) => [fmtImpact(x), rangeBasis[i]]),
     hovertemplate,
     showlegend: false,
   });
@@ -73,8 +91,8 @@ function buildFigure(tornadoData, options) {
     font: { family: FONT_FAMILY, size: compact ? 10 : 12, color: '#1c2430' },
     xaxis: {
       title: {
-        text: 'Change in enterprise result ($ per paid mile)',
-        font: { size: compact ? 9 : 11, color: '#5b6573' },
+        text: 'Impact on enterprise result ($/paid mile)',
+        font: { size: compact ? 10 : 12, color: '#5b6573' },
       },
       tickformat: '$.2f',
       zeroline: true,

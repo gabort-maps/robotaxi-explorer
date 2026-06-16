@@ -27,13 +27,13 @@ const EVIDENCE_QUALITY_TEXT = {
   claims_realised: 'Claims-realised scenario',
 };
 
-// Shortened labels for the desktop 3-column slider grid; the mobile
-// single-column list keeps the full data-file labels (CSS swaps the spans).
+// Shortened labels for the desktop 3-column slider grid, the tornado chart,
+// and the break-even section; mobile keeps full labels (CSS swaps the spans).
 // Variables not listed here are short enough to use their full label.
-const SHORT_LABELS = {
+export const SHORT_LABELS = {
   gross_fare_per_paid_mile: 'Fare / paid mile',
   revenue_leakage_rate: 'Revenue leakage',
-  vehicle_av_capex: 'Vehicle + AV-kit cost',
+  vehicle_av_capex: 'Vehicle cost',
   vehicle_lifetime_miles: 'Lifetime miles',
   direct_running_cost_per_total_mile: 'Running cost',
   local_fleet_ops_cost_per_total_mile: 'Fleet ops cost',
@@ -44,6 +44,40 @@ const SHORT_LABELS = {
   city_launch_cost: 'City launch cost',
   recurring_city_overhead: 'City overhead / yr',
   amortisation_period_years: 'Amortisation period',
+};
+
+// Short user-facing explanations shown in the info-icon tooltip on each slider.
+const TOOLTIP_TEXT = {
+  gross_fare_per_paid_mile:
+    'The fare charged to riders, per paid mile, before any platform commission, aggregator fee, or discount.',
+  revenue_leakage_rate:
+    'Share of gross fare lost to aggregators, distribution platforms, or third-party booking channels.',
+  paid_mile_ratio:
+    'Proportion of total vehicle miles that are revenue-generating. The remainder is deadheading or repositioning.',
+  vehicle_av_capex:
+    'Total capital cost to acquire and equip one autonomous vehicle, including the autonomy stack.',
+  vehicle_lifetime_miles:
+    'Total miles each vehicle is expected to operate before retirement.',
+  residual_value_pct:
+    'Percentage of initial vehicle cost recovered at end-of-life through resale or redeployment.',
+  direct_running_cost_per_total_mile:
+    'Per-mile operating cost excluding depreciation: energy, tyres, maintenance, cleaning, insurance.',
+  local_fleet_ops_cost_per_total_mile:
+    'Per-mile cost of running the local fleet: depot operations, remote support, cleaning crews, customer service.',
+  active_vehicles_per_city:
+    'Number of vehicles deployed per city in active rider service.',
+  number_of_cities:
+    'Number of cities in active rider service across the network.',
+  annual_platform_fixed_cost:
+    'Annual cost of fixed engineering, mapping, validation, and central infrastructure — independent of fleet size.',
+  platform_cost_per_vehicle_year:
+    'Annual platform cost that scales with fleet size: cloud, ops support, per-vehicle monitoring.',
+  city_launch_cost:
+    'One-time cost to launch operations in a new city: mapping, permits, depot setup, regulatory work.',
+  recurring_city_overhead:
+    'Annual cost of operating in one city: local team, facility, ongoing compliance.',
+  amortisation_period_years:
+    'Period over which one-time city launch costs are spread for the annual cost calculation.',
 };
 
 // All four are USD per paid mile; the label and number carry the card alone.
@@ -218,19 +252,37 @@ function buildSliderRow(refs, variableId, assumptions, onInput) {
   });
   input.addEventListener('input', () => onInput(variableId, Number(input.value)));
 
+  const labelChildren = [
+    el('span', { class: 'label-full' }, def.label),
+    el('span', { class: 'label-short' }, SHORT_LABELS[variableId] ?? def.label),
+    badgeSlot,
+  ];
+  const tipText = TOOLTIP_TEXT[variableId];
+  if (tipText) {
+    const infoIcon = el(
+      'span',
+      { class: 'info-icon', role: 'button', tabindex: '0', 'aria-label': 'Variable explanation' },
+      'ⓘ',
+      el('span', { class: 'info-tip' }, tipText)
+    );
+    infoIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (refs.openTip && refs.openTip !== infoIcon) {
+        refs.openTip.classList.remove('tip-open');
+      }
+      infoIcon.classList.toggle('tip-open');
+      refs.openTip = infoIcon.classList.contains('tip-open') ? infoIcon : null;
+    });
+    labelChildren.push(infoIcon);
+  }
+
   const row = el(
     'div',
-    { class: 'slider-row', title: def.methodology_note },
+    { class: 'slider-row' },
     el(
       'div',
       { class: 'slider-head' },
-      el(
-        'span',
-        { class: 'slider-label' },
-        el('span', { class: 'label-full' }, def.label),
-        el('span', { class: 'label-short' }, SHORT_LABELS[variableId] ?? def.label),
-        badgeSlot
-      ),
+      el('span', { class: 'slider-label' }, ...labelChildren),
       valueEl
     ),
     input
@@ -260,6 +312,7 @@ export function buildUI(root, assumptions, handlers) {
     maturityButtons: new Map(),
     outputs: new Map(),
     toastTimer: null,
+    openTip: null,
   };
 
   refs.banner = el(
@@ -269,16 +322,68 @@ export function buildUI(root, assumptions, handlers) {
   );
   refs.banner.hidden = true;
 
+  refs.resetButton = el(
+    'button',
+    {
+      class: 'reset-button',
+      type: 'button',
+      title: 'Restore baseline for this scenario.',
+    },
+    'Reset'
+  );
+  refs.resetButton.addEventListener('click', handlers.onReset);
+
+  refs.shareButton = el('button', { class: 'share-button', type: 'button' });
+  refs.shareButton.innerHTML = SHARE_ICON_SVG;
+  refs.shareButton.append(' Copy link');
+  refs.shareButton.addEventListener('click', handlers.onShare);
+
+  const whatIsThis = el(
+    'details',
+    { class: 'what-is-this' },
+    el('summary', {}, 'What is this?'),
+    el(
+      'p',
+      { class: 'what-is-this-body' },
+      'An interactive scenario model for robotaxi network economics. It lets readers test which improvements — vehicle cost, utilisation, platform leverage, city replication — would need to become true for a robotaxi network to reach profitability. This is an educational tool, not a P&L claim or forecast for any specific operator. All assumptions, ranges, and sources are open in the project repository.'
+    )
+  );
+
   const header = el(
     'header',
     { class: 'site-header' },
+    // Wordmark row: brand name left, "How to read this model" right
+    el(
+      'div',
+      { class: 'wordmark-row' },
+      el(
+        'div',
+        { class: 'wordmark' },
+        el('span', { class: 'wordmark-name' }, 'PARALLAX INSIGHT'),
+        el('hr', { class: 'wordmark-rule' })
+      ),
+      el('a', { class: 'methodology-link', href: '#methodology' }, 'How to read this model')
+    ),
+    // Title row: h1 left, controls (Reset / Copy link / What is this?) right
     el(
       'div',
       { class: 'title-row' },
       el('h1', {}, 'Robotaxi Scalability Explorer'),
-      el('a', { class: 'methodology-link', href: '#methodology' }, 'How to read this model')
+      el(
+        'div',
+        { class: 'title-actions' },
+        refs.resetButton,
+        refs.shareButton,
+        whatIsThis
+      )
     ),
-    el('p', { class: 'subtitle' }, assumptions.positioning)
+    // Subtitle row: positioning copy left, article link right
+    el(
+      'div',
+      { class: 'subtitle-row' },
+      el('p', { class: 'subtitle' }, assumptions.positioning),
+      el('a', { class: 'article-link', href: '#article-link-placeholder' }, '← Read the article')
+    )
   );
 
   // architecture: compact segmented toggle, quieter than the maturity buttons
@@ -325,39 +430,12 @@ export function buildUI(root, assumptions, handlers) {
   // evidence quality caption sits below the preset buttons
   refs.evidenceLabel = el('p', { class: 'evidence-label' }, '');
 
-  refs.resetButton = el(
-    'button',
-    {
-      class: 'reset-button',
-      type: 'button',
-      title: 'Restore baseline for this scenario.',
-    },
-    'Reset'
-  );
-  refs.resetButton.addEventListener('click', handlers.onReset);
-
-  refs.shareButton = el('button', { class: 'share-button', type: 'button' });
-  refs.shareButton.innerHTML = SHARE_ICON_SVG;
-  refs.shareButton.append(' Copy link');
-  refs.shareButton.addEventListener('click', handlers.onShare);
-
-  // utilities row (demoted, right-aligned) above the scenario row
-  const actionsRow = el(
-    'div',
-    { class: 'actions-row' },
-    refs.resetButton,
-    refs.shareButton
-  );
-
-  // preset block: maturity buttons + evidence quality label stacked vertically
-  const presetBlock = el('div', { class: 'preset-block' }, presetGrid, refs.evidenceLabel);
-
-  // single scenario row: preset block left, architecture toggle right;
-  // mobile reverses to stack the toggle above the maturity buttons
+  // Maturity buttons and architecture toggle share a single row.
+  // Evidence quality label sits on its own line directly below.
   const scenarioRow = el(
     'div',
     { class: 'scenario-row' },
-    presetBlock,
+    presetGrid,
     archToggle
   );
 
@@ -435,7 +513,7 @@ export function buildUI(root, assumptions, handlers) {
     )
   );
 
-  refs.breakEvenList = el('ul', { class: 'breakeven-list' });
+  refs.breakEvenList = el('div', { class: 'breakeven-content' });
   const breakeven = el(
     'section',
     { class: 'section-breakeven' },
@@ -483,8 +561,75 @@ export function buildUI(root, assumptions, handlers) {
       target: '_blank',
       rel: 'noopener',
     },
-    'data files on GitHub'
+    'View the data files, formulas, and sources on GitHub'
   );
+
+  const confidenceLegendItems = [
+    ['badge-high', 'High', 'H', 'Well-evidenced from observed operational data'],
+    ['badge-medium', 'Med', 'M', 'Triangulated from partial evidence and industry analogues'],
+    ['badge-low', 'Low', 'L', 'Forward-looking estimate from claims, projections, or thin evidence base'],
+    ['badge-very-low', 'Very Low', 'VL', 'Speculative or based on a single source'],
+  ];
+  const confidenceLegend = el(
+    'details',
+    { class: 'confidence-legend' },
+    el('summary', {}, 'About confidence ratings'),
+    el('p', {}, 'Each variable carries a confidence rating reflecting how well-evidenced its credible range is:'),
+    el(
+      'ul',
+      { class: 'confidence-list' },
+      ...confidenceLegendItems.map(([cls, longText, shortText, desc]) =>
+        el(
+          'li',
+          { class: 'confidence-list-item' },
+          el(
+            'span',
+            { class: `badge ${cls}` },
+            el('span', { class: 'badge-long' }, longText),
+            el('span', { class: 'badge-short' }, shortText)
+          ),
+          el('span', { class: 'confidence-desc' }, desc)
+        )
+      )
+    ),
+    el(
+      'p',
+      { class: 'confidence-note' },
+      'Confidence ratings appear next to slider labels and in the tornado chart. They do not reflect the quality of the tool — they reflect the maturity of robotaxi industry data.'
+    )
+  );
+
+  const methodologyBox = el(
+    'div',
+    { class: 'methodology-box' },
+    el(
+      'div',
+      { class: 'methodology-can' },
+      el('h3', {}, 'What this tool can do'),
+      el(
+        'ul',
+        {},
+        el('li', {}, 'Show how individual cost levers move profitability'),
+        el('li', {}, 'Test which levers must improve to close the break-even gap'),
+        el('li', {}, 'Compare three architecture cases (Waymo current, Waymo next-gen, Cybercab) at three network maturities'),
+        el('li', {}, 'Illustrate where revenue flows in a robotaxi network')
+      )
+    ),
+    el(
+      'div',
+      { class: 'methodology-cannot' },
+      el('h3', {}, 'What this tool cannot do'),
+      el(
+        'ul',
+        {},
+        el('li', {}, "Predict any specific operator's actual financial results"),
+        el('li', {}, 'Model a mixed-architecture fleet (run scenarios separately and weight by paid miles)'),
+        el('li', {}, 'Capture local regulatory, weather, or geographic constraints not already reflected in city-level costs'),
+        el('li', {}, 'Substitute for due diligence on any specific business')
+      )
+    )
+  );
+
   const footer = el(
     'footer',
     { id: 'methodology', class: 'methodology' },
@@ -495,10 +640,25 @@ export function buildUI(root, assumptions, handlers) {
       'Every assumption carries an evidence-based low–high range. In the sensitivity (tornado) view, a wider bar means the evidence is genuinely more uncertain: range widths reflect the strength of the available evidence, not a modelling choice, and they are deliberately not normalised to make variables look equally important.'
     ),
     el('p', {}, 'To approximate a mixed Waymo fleet, run the current-gen and next-gen scenarios separately under the same network assumptions, then weight the outputs by the share of paid miles produced by each generation.'),
-    el('p', {}, "All assumptions, ranges, sources and formulas live in the project's ", githubLink, '.')
+    el('p', {}, githubLink, '.'),
+    confidenceLegend,
+    methodologyBox,
+    el(
+      'p',
+      { class: 'disclaimer' },
+      'This tool is provided for educational and analytical purposes only. It is not investment advice and does not represent the actual financial performance, internal projections, or strategic position of Waymo, Tesla, Alphabet, or any other named entity. All assumptions are public estimates compiled by the author and may differ from any operator\'s actual figures. Use at your own discretion.'
+    )
   );
 
   refs.toast = el('div', { class: 'toast', role: 'status', 'aria-live': 'polite' });
+
+  // Dismiss any open info-icon tooltip when clicking elsewhere on the page.
+  document.addEventListener('click', () => {
+    if (refs.openTip) {
+      refs.openTip.classList.remove('tip-open');
+      refs.openTip = null;
+    }
+  });
 
   root.append(
     refs.banner,
@@ -506,8 +666,8 @@ export function buildUI(root, assumptions, handlers) {
       'div',
       { class: 'container' },
       header,
-      actionsRow,
       scenarioRow,
+      refs.evidenceLabel,
       explorerMain,
       tornado,
       footer
@@ -627,27 +787,76 @@ export function updateAdjustedBadges(refs, adjustedIds) {
 }
 
 export function updateBreakEvenList(refs, rows, assumptions) {
+  const satisfied = rows.filter(
+    (r) => !r.achievable && r.message.startsWith('Already at or above')
+  );
+  const achievable = rows.filter((r) => r.achievable);
+  const notAchievable = rows.filter(
+    (r) => !r.achievable && !r.message.startsWith('Already at or above')
+  );
+
+  const shortLabel = (variableId) =>
+    SHORT_LABELS[variableId] ?? assumptions.variables[variableId].label;
+
   refs.breakEvenList.replaceChildren();
-  for (const row of rows) {
-    const def = assumptions.variables[row.variableId];
-    let status;
-    let cls;
-    if (row.achievable) {
-      status = `must reach ${formatVariableValue(row.variableId, row.value, assumptions)}`;
-      cls = 'achievable';
-    } else if (row.message.startsWith('Already at or above')) {
-      status = 'already at or above break-even across its credible range';
-      cls = 'satisfied';
-    } else {
-      status = 'not achievable within the evidence-based range';
-      cls = 'not-achievable';
-    }
+
+  // Green satisfied line (already at break-even)
+  if (satisfied.length > 0) {
     refs.breakEvenList.append(
       el(
-        'li',
-        { class: `breakeven-item ${cls}` },
-        el('span', { class: 'breakeven-label' }, def.label),
-        el('span', { class: 'breakeven-status' }, status)
+        'div',
+        { class: 'breakeven-satisfied-line' },
+        `Already meeting break-even: ${satisfied.map((r) => shortLabel(r.variableId)).join(', ')}`
+      )
+    );
+  }
+
+  // All-unachievable: single summary + collapsed names, no grid
+  if (achievable.length === 0 && notAchievable.length > 0) {
+    refs.breakEvenList.append(
+      el(
+        'div',
+        { class: 'breakeven-all-unachievable' },
+        'No single lever closes this gap within its evidence-based range — combined improvements across multiple levers are required.'
+      ),
+      el(
+        'div',
+        { class: 'breakeven-not-achievable-line' },
+        notAchievable.map((r) => shortLabel(r.variableId)).join(', ')
+      )
+    );
+    return;
+  }
+
+  // Achievable rows — 2-col grid on desktop when ≥ 3
+  if (achievable.length > 0) {
+    const gridCls =
+      achievable.length >= 3
+        ? 'breakeven-achievable-grid breakeven-achievable-grid--multi'
+        : 'breakeven-achievable-grid';
+    const grid = el('div', { class: gridCls });
+    for (const row of achievable) {
+      grid.append(
+        el(
+          'div',
+          { class: 'breakeven-achievable-item' },
+          el('span', { class: 'breakeven-achievable-label' }, shortLabel(row.variableId)),
+          el('span', { class: 'breakeven-achievable-arrow' }, '→'),
+          el('span', { class: 'breakeven-achievable-target' },
+            formatVariableValue(row.variableId, row.value, assumptions))
+        )
+      );
+    }
+    refs.breakEvenList.append(grid);
+  }
+
+  // Collapsed unachievable summary line
+  if (notAchievable.length > 0) {
+    refs.breakEvenList.append(
+      el(
+        'div',
+        { class: 'breakeven-not-achievable-line' },
+        `Within their evidence-based ranges alone, the following levers cannot close the gap: ${notAchievable.map((r) => shortLabel(r.variableId)).join(', ')}.`
       )
     );
   }

@@ -12,7 +12,7 @@
 import Plotly from 'plotly.js-dist-min';
 
 export const FONT_FAMILY =
-  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+  "'Helvetica Neue', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 export const MOBILE_QUERY = '(max-width: 719.98px)';
 

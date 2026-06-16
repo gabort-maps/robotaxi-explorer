@@ -1,18 +1,19 @@
-/* styles.css — analytical, system-font, restrained-palette styling */
+/* styles.css — Parallax Insight light theme */
 
 :root {
-  --accent: #1f4e8c;
+  --accent: #23C0C5;
   --text: #1c2430;
   --muted: #5b6573;
-  --border: #dde3ea;
-  --bg: #f7f9fb;
+  --border: #EAEAEA;
+  --bg: #F5F0EB;
   --surface: #ffffff;
   --danger: #b42318;
   --good: #156e42;
+  /* Badge colours are intentionally NOT linked to --accent */
   --badge-high-bg: #e0f2e9;
   --badge-high-fg: #156e42;
   --badge-medium-bg: #e3edfa;
-  --badge-medium-fg: #1f4e8c;
+  --badge-medium-fg: #1f4e8c; /* original blue, never changes with accent */
   --badge-low-bg: #fbf0d3;
   --badge-low-fg: #8a6100;
 }
@@ -23,8 +24,8 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, Helvetica,
+    Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color: var(--text);
@@ -32,11 +33,21 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* v0.2.0: wide enough for the 3-column slider grid */
+/* wide enough for the 3-column slider grid */
 .container {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 24px 56px;
+}
+
+/* ---- focus rings ---- */
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid rgba(35, 192, 197, 0.45);
+  outline-offset: 2px;
 }
 
 /* ---- version banner ---- */
@@ -52,53 +63,160 @@ body {
 /* ---- header ---- */
 
 .site-header {
-  padding: 22px 0 0;
+  padding: 24px 0 0;
 }
 
-.title-row {
+/* Wordmark row: brand name left, "How to read this model" right */
+.wordmark-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  margin-bottom: 6px;
+}
+
+/* Parallax Insight wordmark: name + teal rule sized to text width */
+.wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.wordmark-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #000;
+  line-height: 1.2;
+}
+
+.wordmark-rule {
+  border: none;
+  margin: 3px 0 0;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* Title row: h1 left, (Reset + Copy link + What is this?) right */
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 2px;
+}
+
+.title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .site-header h1 {
   margin: 0;
-  font-size: 1.7rem;
+  font-size: 1.375rem;
   font-weight: 700;
+  color: #000;
   letter-spacing: -0.01em;
 }
 
+/* Subtitle row: positioning copy left, article link right */
+.subtitle-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 6px;
+}
+
 .subtitle {
-  margin: 2px 0 0;
+  margin: 0;
+  font-size: 0.875rem;
   color: var(--muted);
-  max-width: 620px;
+}
+
+.article-link {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.article-link:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 
 .methodology-link {
   color: var(--accent);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .methodology-link:hover,
-.methodology a:hover {
+.methodology a:hover,
+.confidence-legend > summary:hover {
   text-decoration: underline;
+}
+
+/* "What is this?" lives inside title-actions; body drops below as a panel */
+.what-is-this {
+  position: relative;
+}
+
+.what-is-this > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.82rem;
+  user-select: none;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.what-is-this > summary::-webkit-details-marker {
+  display: none;
+}
+
+.what-is-this > summary::after {
+  content: ' ↓';
+}
+
+.what-is-this[open] > summary::after {
+  content: ' ↑';
+}
+
+/* Dropdown panel — absolute so it doesn't affect title-row height */
+/* Explicitly hidden; Chrome doesn't reliably apply UA display:none to
+   position:absolute children of a closed <details>. */
+.what-is-this-body {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+}
+
+.what-is-this[open] .what-is-this-body {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  width: 340px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.10);
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 /* ---- scenario controls ---- */
 
-/* demoted utilities, right-aligned above the scenario row */
-.actions-row {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0 4px;
-}
-
-/* maturity buttons left, architecture toggle right */
+/* maturity buttons left, architecture toggle right — same row */
 .scenario-row {
   display: flex;
   align-items: center;
@@ -128,7 +246,7 @@ body {
   font-style: italic;
 }
 
-/* quiet segmented architecture toggle */
+/* quiet segmented architecture toggle — dark border, teal active */
 .arch-toggle {
   display: flex;
   align-items: center;
@@ -145,8 +263,8 @@ body {
 
 .arch-segments {
   display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid #444;
+  border-radius: 6px;
   overflow: hidden;
   background: var(--surface);
 }
@@ -157,17 +275,17 @@ body {
   padding: 6px 10px;
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: var(--text);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .arch-button + .arch-button {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid #444;
 }
 
 .arch-button:hover {
-  color: var(--text);
+  background: #f5f5f5;
 }
 
 .arch-button.active {
@@ -176,21 +294,19 @@ body {
   font-weight: 600;
 }
 
-.preset-button,
-.reset-button,
-.share-button {
+/* maturity buttons — light border, teal active */
+.preset-button {
   font: inherit;
   font-size: 0.9rem;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
 }
 
-.preset-button:hover,
-.share-button:hover {
+.preset-button:hover {
   border-color: var(--accent);
 }
 
@@ -201,31 +317,47 @@ body {
   font-weight: 600;
 }
 
-/* deliberately demoted next to Copy link */
+/* deliberately demoted */
 .reset-button {
-  background: #e9edf1;
-  border-color: transparent;
-  color: var(--muted);
+  font: inherit;
   font-size: 0.8rem;
   padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: #e9edf1;
+  color: var(--muted);
+  cursor: pointer;
 }
 
 .reset-button:hover {
   border-color: #c9d2db;
 }
 
+/* copy link: teal border + text; hover fills teal */
 .share-button {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--surface);
   color: var(--accent);
   font-weight: 500;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+.share-button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* ---- sections ---- */
 
 section {
-  margin: 28px 0;
+  margin: 32px 0;
 }
 
 /* slider grid sits close under the scenario controls */
@@ -248,12 +380,11 @@ h2 {
 
 /* ---- sliders ---- */
 
-/* desktop: 3-column grid (9 main = 3×3, 3 advanced = 1×3); compact cells
-   with label+badge left, value right, full-width track below */
+/* desktop: 3-column grid (9 main = 3×3, advanced = 1×3) */
 .sliders {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px 24px;
+  gap: 10px 24px;
 }
 
 .slider-row {
@@ -270,39 +401,97 @@ h2 {
 
 .slider-label {
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 13px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
 
+.label-short {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-slot {
+  flex-shrink: 0;
+}
+
 .slider-value {
   font-size: 0.9rem;
-}
-
-/* full labels are for the mobile single-column list; the grid uses the
-   shortened set (see the mobile media query for the swap) */
-.label-full {
-  display: none;
-}
-
-.slider-value {
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* full labels are for mobile; grid uses short labels (CSS swaps) */
+.label-full {
+  display: none;
 }
 
 details.advanced .sliders {
   margin-top: 10px;
 }
 
-/* system slider styling on purpose — accent-color only, thin default track */
+/* accent-color drives the slider thumb and filled track */
 input[type='range'] {
   width: 100%;
   height: 20px;
   margin: 2px 0 0;
   accent-color: var(--accent);
 }
+
+/* ---- info icon + tooltip ---- */
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: help;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.info-tip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 5px);
+  min-width: 220px;
+  max-width: 280px;
+  background: #1c2430;
+  color: #f0f2f4;
+  padding: 8px 10px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.45;
+  z-index: 50;
+  pointer-events: none;
+  display: none;
+  white-space: normal;
+}
+
+@keyframes tip-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.info-icon:hover .info-tip {
+  display: block;
+  animation: tip-in 0.12s ease 0.2s both;
+}
+
+.info-icon.tip-open .info-tip {
+  display: block;
+  pointer-events: auto;
+  animation: none;
+}
+
+/* ---- badges ---- */
 
 .badge {
   font-size: 0.68rem;
@@ -362,7 +551,7 @@ details.advanced summary {
   margin: 0 0 6px;
 }
 
-/* ---- output cards (compact: ~60px tall, 4x1 desktop / 2x2 mobile) ---- */
+/* ---- output cards (4x1 desktop / 2x2 mobile) ---- */
 
 .cards {
   display: grid;
@@ -373,7 +562,7 @@ details.advanced summary {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 7px 10px;
 }
 
@@ -402,7 +591,7 @@ details.advanced summary {
 .chart-placeholder {
   background: var(--surface);
   border: 1px dashed #c3ccd6;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -414,7 +603,6 @@ details.advanced summary {
   min-height: 320px;
 }
 
-/* keep Plotly's sankey SVG (and any label overhang) inside the container */
 #sankey-chart {
   overflow: hidden;
 }
@@ -427,20 +615,16 @@ details.advanced summary {
   min-height: 280px;
 }
 
-/* once Plotly takes over, the dashed placeholder frame is removed via JS;
-   numbers inside the SVG charts keep tabular figures */
 #sankey-chart text,
 #tornado-chart text {
   font-variant-numeric: tabular-nums;
 }
 
-/* tornado chart + confidence badge column. The column's vertical padding
-   mirrors TORNADO_MARGIN (t: 8, b: 44) in tornado.js so each badge row
-   centers on its bar. */
+/* tornado chart + confidence badge column. Gap = 0 so badges sit flush. */
 .tornado-wrap {
   display: flex;
   align-items: stretch;
-  gap: 6px;
+  gap: 0;
 }
 
 .tornado-wrap .chart-tornado {
@@ -448,10 +632,11 @@ details.advanced summary {
   min-width: 0;
 }
 
+/* vertical padding mirrors TORNADO_MARGIN (t: 8, b: 44) from tornado.js */
 .tornado-badges {
   display: flex;
   flex-direction: column;
-  width: 48px;
+  width: 44px;
   padding: 8px 0 44px;
 }
 
@@ -462,46 +647,73 @@ details.advanced summary {
   justify-content: center;
 }
 
-/* mobile-only sticky live readout (see the mobile media query) */
+/* mobile-only sticky live readout */
 .readout-strip {
   display: none;
 }
 
-/* ---- break-even list ---- */
+/* ---- break-even section ---- */
 
-.breakeven-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.breakeven-item {
+.breakeven-content {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.95rem;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.breakeven-item:last-child {
-  border-bottom: none;
-}
-
-.breakeven-status {
-  font-weight: 600;
-  text-align: right;
-}
-
-.breakeven-item.not-achievable .breakeven-status {
-  color: var(--danger);
-  font-weight: 500;
-}
-
-.breakeven-item.satisfied .breakeven-status {
+.breakeven-satisfied-line {
+  font-size: 0.82rem;
   color: var(--good);
   font-weight: 500;
+}
+
+.breakeven-all-unachievable {
+  font-size: 0.875rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* achievable rows — single col by default, 2-col on desktop when ≥ 3 */
+.breakeven-achievable-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breakeven-achievable-grid--multi {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 32px;
+}
+
+.breakeven-achievable-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 0.875rem;
+  padding: 3px 0;
+}
+
+.breakeven-achievable-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.breakeven-achievable-arrow {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.breakeven-achievable-target {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.breakeven-not-achievable-line {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
 }
 
 /* ---- methodology footer ---- */
@@ -512,11 +724,108 @@ details.advanced summary {
   border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.875rem;
-  max-width: 680px;
+  max-width: 720px;
 }
 
 .methodology a {
   color: var(--accent);
+}
+
+/* can/cannot two-column box */
+.methodology-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  background: #f8f8f8;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  margin: 20px 0;
+  color: var(--text);
+}
+
+.methodology-can {
+  padding-right: 20px;
+}
+
+.methodology-cannot {
+  padding-left: 20px;
+  border-left: 1px solid var(--border);
+}
+
+.methodology-box h3 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0 0 10px;
+}
+
+.methodology-box ul {
+  margin: 0;
+  padding: 0 0 0 14px;
+}
+
+.methodology-box li {
+  margin: 5px 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* confidence legend — expandable */
+.confidence-legend {
+  margin: 16px 0;
+}
+
+.confidence-legend > summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.85rem;
+  user-select: none;
+  list-style: none;
+}
+
+.confidence-legend > summary::-webkit-details-marker {
+  display: none;
+}
+
+.confidence-list {
+  list-style: none;
+  margin: 10px 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confidence-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.confidence-desc {
+  color: var(--text);
+}
+
+.confidence-note {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 8px 0 0;
+}
+
+/* disclaimer at the bottom of the methodology section */
+.disclaimer {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
 }
 
 /* ---- toast ---- */
@@ -550,17 +859,39 @@ details.advanced summary {
   }
 
   .site-header {
-    padding-top: 24px;
+    padding-top: 20px;
   }
 
   .site-header h1 {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
   }
 
-  /* architecture toggle stacks above the maturity buttons, both full-width */
+  /* Title-row: let h1 and actions wrap if needed */
+  .title-row {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  /* On mobile the what-is-this dropdown is full-width */
+  .what-is-this-body {
+    position: fixed;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    top: auto;
+  }
+
+  /* Subtitle row: subtitle full-width, article link on same line if it fits */
+  .subtitle-row {
+    flex-wrap: wrap;
+    gap: 2px 16px;
+  }
+
+  /* Scenario: maturity grid stacks above arch toggle on mobile */
   .scenario-row {
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
 
   .arch-toggle {
@@ -578,7 +909,7 @@ details.advanced summary {
     padding: 8px 10px;
   }
 
-  /* all presets stay visible: 2-column grid for 3-4, full-width for 2 */
+  /* all presets: 2-column grid for 3-4, full-width for 2 */
   .preset-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -592,16 +923,7 @@ details.advanced summary {
     grid-template-columns: 1fr;
   }
 
-  .actions-row > * {
-    flex: 1;
-  }
-
-  .share-button {
-    justify-content: center;
-  }
-
-  /* live readout strip: sticky at the top of the viewport while the
-     controls section (its containing block) is in view, releases after */
+  /* live readout strip: sticky at the top while controls section is in view */
   .readout-strip {
     display: flex;
     position: sticky;
@@ -635,8 +957,7 @@ details.advanced summary {
     line-height: 1.2;
   }
 
-  /* single column, normal flow: sliders → sankey → cards → break-even;
-     no sticky charts */
+  /* single column, normal flow */
   #explorer-main {
     display: flex;
     flex-direction: column;
@@ -658,18 +979,20 @@ details.advanced summary {
     order: 3;
   }
 
+  .breakeven-achievable-grid--multi {
+    grid-template-columns: 1fr;
+  }
+
   .section-breakeven {
     order: 4;
   }
 
-  /* cards keep their grid but are demoted — the strip carries the two
-     headline numbers */
   .cards {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
-  /* single-column slider list with full labels and row separators */
+  /* single-column slider list with full labels */
   .sliders {
     grid-template-columns: 1fr;
     gap: 0;
@@ -717,5 +1040,31 @@ details.advanced summary {
 
   .tornado-badges {
     width: 26px;
+  }
+
+  /* tooltip stays within viewport on mobile: anchor right side */
+  .info-tip {
+    left: auto;
+    right: 0;
+    min-width: 200px;
+    max-width: 260px;
+  }
+
+  /* methodology can/cannot stacks vertically */
+  .methodology-box {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .methodology-can {
+    padding-right: 0;
+    padding-bottom: 16px;
+  }
+
+  .methodology-cannot {
+    padding-left: 0;
+    padding-top: 16px;
+    border-left: none;
+    border-top: 1px solid var(--border);
   }
 }
