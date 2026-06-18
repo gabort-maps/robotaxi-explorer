@@ -382,7 +382,7 @@ export function buildUI(root, assumptions, handlers) {
       'div',
       { class: 'subtitle-row' },
       el('p', { class: 'subtitle' }, assumptions.positioning),
-      el('a', { class: 'article-link', href: '#article-link-placeholder' }, '← Read the article')
+      el('a', { class: 'article-link', href: 'https://gabortom.substack.com/p/robotaxis-dont-scale-when-costs-disappear', target: '_blank', rel: 'noopener' }, '← Read the article')
     )
   );
 
