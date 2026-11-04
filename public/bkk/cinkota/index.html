@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow,noarchive"></head><body><title>If all of Cinkota’s buses were electric</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive"></head><body><title>If all of Cinkota’s buses were electric</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
@@ -108,6 +109,11 @@ canvas.ch.click{cursor:pointer}
 /* playback bar over the map */
 .pb .play{width:38px;height:38px;border-radius:50%;border:0;background:var(--focus);color:#fff;cursor:pointer;display:grid;place-items:center;padding:0}
 .pb .play svg{width:18px;height:18px;fill:#fff}
+.pb .play{position:relative}
+.pb .play.attn::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--focus);pointer-events:none;animation:playring 1.5s ease-out infinite}   /* a ring pulses round the button while the replay is paused */
+@keyframes playring{0%{transform:scale(.95);opacity:.95}100%{transform:scale(1.55);opacity:0}}
+#app[data-tab=summary] .pb .play::after,#app[data-tab=synergies] .pb .play::after{display:none}
+@media (prefers-reduced-motion:reduce){.pb .play.attn::after{animation:none;transform:scale(1.2);opacity:.7}}
 .pb .clk{display:flex;flex-direction:column;line-height:1.1}
 .pb .clk b{font:600 22px/1 var(--mono);font-variant-numeric:tabular-nums}
 .pb .clk span{font-size:12px;color:var(--ink-3)}
@@ -335,7 +341,7 @@ details.card>summary{cursor:pointer;font-size:12px;letter-spacing:.08em;text-tra
     <div class="hrow2">
       <div class="grp tgrp"><span class="glabel">Replay clock</span>
         <div class="pb" id="pb">
-          <button class="play" id="play" type="button" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playico" d="M7 4v16l13-8z"/></svg></button>
+          <button class="play attn" id="play" type="button" aria-label="Play" title="Play the day"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playico" d="M7 4v16l13-8z"/></svg></button>
           <div class="clk"><b id="clk">03:00</b><span id="clkd">Thu 22 Oct</span></div>
           <input type="range" id="slider" min="0" max="1439" step="1" value="540" aria-label="Time of day">
           <div class="spd" id="spd" role="group" aria-label="Speed"></div>
@@ -1656,10 +1662,11 @@ document.querySelectorAll('input[name=swk]').forEach(r => r.addEventListener('ch
 
 // ---------- playback ----------
 const playBtn = document.getElementById('play'), slider = document.getElementById('slider');
-function setPlaying(on){ playing = on; playBtn.setAttribute('aria-label', on ? 'Pause' : 'Play');
+let HANDS = false;   // the visitor has used the play button or the slider: the page does not start the replay by itself after that
+function setPlaying(on){ playing = on; playBtn.setAttribute('aria-label', on ? 'Pause' : 'Play'); playBtn.title = on ? 'Pause' : 'Play the day'; playBtn.classList.toggle('attn', !on);
   document.getElementById('playico').setAttribute('d', on ? 'M6 4h4v16H6zM14 4h4v16h-4z' : 'M7 4v16l13-8z'); lastTs = 0; dirty = true; }
-playBtn.addEventListener('click', () => { if (!playing && T >= NM - 1e-3) T = 0; setPlaying(!playing); });   // play at the very end starts again; play from the last slider minute plays on
-slider.addEventListener('input', () => { T = +slider.value; dirty = true; lastMinute = -1; tick(performance.now(), true); });
+playBtn.addEventListener('click', () => { HANDS = true; if (!playing && T >= NM - 1e-3) T = 0; setPlaying(!playing); });   // play at the very end starts again; play from the last slider minute plays on
+slider.addEventListener('input', () => { HANDS = true; T = +slider.value; dirty = true; lastMinute = -1; tick(performance.now(), true); });
 document.getElementById('spd').innerHTML = SPEEDS.map(s => `<button type="button" data-s="${s}" aria-pressed="${s === speed}">${s}×</button>`).join('');
 document.querySelectorAll('#spd button').forEach(b => b.addEventListener('click', () => { speed = +b.dataset.s; document.querySelectorAll('#spd button').forEach(x => x.setAttribute('aria-pressed', x === b)); }));
 document.addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat && TAB !== 'synergies' && !/^(INPUT|BUTTON|SUMMARY)$/.test(document.activeElement.tagName)){ e.preventDefault(); playBtn.click(); } });
@@ -1798,6 +1805,7 @@ async function start(){
   updateClock(); updateStats(); loadMsg('Ready', 1); setTimeout(loadDone, 200); startGarage();
   window.REPLAY = {TM, setT(t){ T = t; dirty = true; lastMinute = -1; tick(performance.now(), true); }, play(on){ setPlaying(on); }, speed(s){ speed = s; }, select: selectBus, get T(){ return T; }, get META(){ return META; }, busAt, setCase(o){ Object.assign(REQ, o); syncRadios(); return setCase(); }, get CASE(){ return CASE; }, get REQ(){ return REQ; }};
   requestAnimationFrame(loop);
+  if (!REDUCE) setTimeout(() => { if (!HANDS && !playing && (TAB === 'mobility' || TAB === 'energy')) setPlaying(true); }, 700);   // the replay starts by itself (not for visitors who asked for less motion)
 }
 start().catch(e => { console.error(e); loadMsg('The page could not start: ' + String(e && e.message || e), 1); });
 </script>
